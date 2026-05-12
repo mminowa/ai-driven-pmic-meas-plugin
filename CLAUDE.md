@@ -136,5 +136,6 @@ MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4141
 ## Reference
 
 - NI Measurement Plug-Ins (Python): https://www.ni.com/docs/ja-JP/bundle/measurementplugins/page/python-measurements.html
-- Reference example: `src/examples/meas-plugin/nidcpower_source_dc_voltage/measurement.py`
+- Measurement Plug-In reference example (refer to the entire folder as needed): `src/examples/meas-plugin/nidcpower_source_dc_voltage/`
+- NI-DCPower driver examples (refer to the entire folder as needed): `src/examples/nidcpower/`
 - Electronic load example: `src/examples/nidcpower/nidcpower_sink_dc_current_into_electronic_load.py`
