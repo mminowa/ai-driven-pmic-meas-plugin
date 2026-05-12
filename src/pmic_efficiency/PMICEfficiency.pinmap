@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PinMap xmlns="http://www.ni.com/TestStand/SemiconductorModule/PinMap.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="1.6">
+	<Instruments>
+		<NIDCPowerInstrument name="Source" numberOfChannels="1">
+			<ChannelGroup name="SourceChannelGroup" />
+		</NIDCPowerInstrument>
+		<NIDCPowerInstrument name="Load" numberOfChannels="1">
+			<ChannelGroup name="LoadChannelGroup" />
+		</NIDCPowerInstrument>
+	</Instruments>
+	<Pins>
+		<DUTPin name="VIN" />
+		<DUTPin name="VOUT" />
+	</Pins>
+	<PinGroups></PinGroups>
+	<Sites>
+		<Site siteNumber="0" />
+	</Sites>
+	<Connections>
+		<Connection pin="VIN" siteNumber="0" instrument="Source" channel="0" />
+		<Connection pin="VOUT" siteNumber="0" instrument="Load" channel="0" />
+	</Connections>
+</PinMap>

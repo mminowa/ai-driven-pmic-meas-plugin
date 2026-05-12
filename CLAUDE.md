@@ -75,11 +75,11 @@ export PATH="$HOME/.local/bin:$PATH"
 
 Add the `export` line to your shell profile (e.g. `~/.bashrc` or `~/.zshrc`) to persist it.
 
-**Windows (Command Prompt):**
+**Windows (PowerShell):**
 
-```bat
-(Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://install.python-poetry.org'))
-set PATH=%APPDATA%\Python\Scripts;%PATH%
+```powershell
+(Invoke-WebRequest https://install.python-poetry.org).Content | python -
+$env:PATH = "$env:APPDATA\Python\Scripts;$env:PATH"
 ```
 
 Add `%APPDATA%\Python\Scripts` to your system PATH via System Properties → Environment Variables to persist it.
