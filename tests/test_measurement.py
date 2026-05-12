@@ -24,7 +24,7 @@ from measurement import _run_measurement, _run_power_off, _run_power_on
 
 _SOURCE_OPTIONS = {
     "simulate": True,
-    "driver_setup": {"Model": "4141", "BoardType": "PXIe"},
+    "driver_setup": {"Model": "4151", "BoardType": "PXIe"},
 }
 _LOAD_OPTIONS = {
     "simulate": True,
