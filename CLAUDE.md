@@ -66,11 +66,14 @@ The steps below set up the Poetry virtual environment first so that
 
 ### 0. Install Poetry and add it to PATH
 
+For the latest installation instructions, refer to the **[official Poetry documentation](https://python-poetry.org/docs/)**.
+
 **macOS / Linux / WSL / Git Bash:**
 
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 export PATH="$HOME/.local/bin:$PATH"
+poetry --version
 ```
 
 Add the `export` line to your shell profile (e.g. `~/.bashrc` or `~/.zshrc`) to persist it.
@@ -78,17 +81,13 @@ Add the `export` line to your shell profile (e.g. `~/.bashrc` or `~/.zshrc`) to 
 **Windows (PowerShell):**
 
 ```powershell
-(Invoke-WebRequest https://install.python-poetry.org).Content | python -
-$env:PATH = "$env:APPDATA\Python\Scripts;$env:PATH"
-```
-
-Add `%APPDATA%\Python\Scripts` to your system PATH via System Properties → Environment Variables to persist it.
-
-Verify the installation:
-
-```bash
+py -3.12 -m pip install --user pipx
+py -3.12 -m pipx ensurepath
+pipx install poetry
 poetry --version
 ```
+
+> `py -3.12` requires Python 3.12. If you have a different version installed, replace `3.12` with your version (e.g. `py -3.11`). Open a new terminal after running `pipx ensurepath` for the PATH change to take effect.
 
 ### 1. Create the plug-in directory and pyproject.toml
 
