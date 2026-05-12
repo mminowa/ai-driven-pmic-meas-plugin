@@ -1,0 +1,12 @@
+{
+  "name": "ai-driven-pmic-meas-plugin",
+  "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  "workspaceFolder": "/workspaces/ai-driven-pmic-meas-plugin",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+        "version": "3.10"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "postCreateCommand": ".devcontainer/post_create.sh"
+}
