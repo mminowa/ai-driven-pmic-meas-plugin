@@ -8,13 +8,21 @@ This repository implements a **PMIC (Power Management IC) Efficiency Test Measur
 
 ## Development Approach
 
-This project follows **Specification-Driven Development**:
+This project follows **Specification-Driven Development**. All work proceeds in three phases in order:
 
-1. **Specification first** — Write a formal spec (inputs, outputs, test flow, pass/fail criteria) before any implementation.
-2. **Tests second** — Write tests that validate the spec before writing production code.
-3. **Implementation last** — Implement only what the spec and tests require; no speculative features.
+### Phase 1 — Specification
 
-Do not implement anything not covered by a written specification in `docs/specs/`.
+Write a formal spec in `docs/specs/` covering inputs, outputs, instrument configuration, test flow, and any constraints. Do not create any source files until the spec is complete and agreed upon.
+
+### Phase 2 — Test Definition
+
+Define how the specification will be verified: expected value ranges, edge cases, and what constitutes correct behavior. Tests are written before production code.
+
+### Phase 3 — Implementation
+
+Set up the plug-in project, write `measurement.py` to satisfy the spec, and verify against the tests. See **Plug-In Technical Setup** below for the step-by-step procedure.
+
+> Do not implement anything not covered by a written specification in `docs/specs/`.
 
 ## Constraints
 
@@ -47,35 +55,24 @@ docs/
 - **Input (source)**: NI PXIe-4151 (PPS) or any nidcpower-compatible SMU in DC voltage source mode
 - **Output (sink)**: NI PXIe-4051 (electronic load) or any nidcpower-compatible SMU in DC current sink mode
 
-## Plug-In Development Workflow
+## Plug-In Technical Setup
 
-### 1. Install prerequisites
+> **This section describes Phase 3 (Implementation) only.**
+> Do not start these steps until the specification (`docs/specs/`) and test definitions are complete.
 
-Install `ni_measurement_plugin_sdk` to get the generator command and the SDK:
+The steps below set up the Poetry virtual environment first so that
+`ni-measurement-plugin-generator` runs inside the project's own venv.
 
-```bash
-python -m pip install ni_measurement_plugin_sdk nidcpower
-```
+### 1. Create the plug-in directory and pyproject.toml
 
-### 2. Generate a new plug-in scaffold
+Create the plug-in directory under `src/` and write `pyproject.toml` manually with
+`ni_measurement_plugin_sdk`, `nidcpower`, and any other required packages as dependencies.
+Use the reference example (`src/examples/meas-plugin/nidcpower_source_dc_voltage/pyproject.toml`)
+as a template.
 
-Run the generator in the parent directory (`src/`) to create the initial project structure:
+### 2. Add Poetry-related files
 
-```bash
-ni-measurement-plugin-generator <measurement_name>
-```
-
-This creates the following files inside a new `<measurement_name>/` directory:
-- `measurement.py` — main measurement logic (edit this)
-- `_helpers.py` — logging and CLI utilities
-- `<measurement_name>.measproj` — project file for Measurement Plug-In UI Editor
-- `<measurement_name>.measui` — UI definition
-- `<measurement_name>.serviceconfig` — service registration config
-- `start.bat` — service launcher (calls `.venv\Scripts\python.exe measurement.py`)
-
-### 3. Configure pyproject.toml and add Poetry-related files
-
-Add `nidcpower` and any other driver packages to `pyproject.toml` dependencies. Then manually create the following two files that the generator does not produce:
+Create the following files in the plug-in directory (the generator does not produce them):
 
 **`poetry.toml`** — keeps the virtual environment inside the project directory:
 
@@ -98,18 +95,40 @@ poetry install --only main
 __pycache__
 ```
 
-### 4. Install dependencies with Poetry
+### 3. Install dependencies with Poetry
 
 ```bash
-cd <measurement_name>
+cd src/<measurement_name>
 poetry install
 ```
 
-This creates a `.venv/` directory inside the plug-in folder, which `start.bat` uses to run the service.
+This creates `.venv/` inside the plug-in directory. All subsequent commands
+(including the generator) run from this virtual environment.
+
+### 4. Generate the plug-in scaffold
+
+Run the generator from inside the plug-in directory using the Poetry virtual environment:
+
+```bash
+poetry run ni-measurement-plugin-generator <measurement_name>
+```
+
+This creates the following files:
+- `measurement.py` — main measurement logic (edit this)
+- `_helpers.py` — logging and CLI utilities
+- `<measurement_name>.measproj` — project file for Measurement Plug-In UI Editor
+- `<measurement_name>.measui` — UI definition
+- `<measurement_name>.serviceconfig` — service registration config
+- `start.bat` — service launcher (calls `.venv\Scripts\python.exe measurement.py`)
+
+The generator also creates its own `pyproject.toml`. Merge any missing dependencies
+into the one you created in step 1 and delete the duplicate.
 
 ### 5. Modify the generated files
 
-Edit `measurement.py` to implement the measurement logic: configuration parameters, output definitions, and the `measure()` function. Update `.serviceconfig` and `.measui` as needed.
+Edit `measurement.py` to implement the measurement logic: configuration parameters,
+output definitions, and the `measure()` function. Update `.serviceconfig` and `.measui`
+as needed.
 
 ### 6. Run the measurement service
 
