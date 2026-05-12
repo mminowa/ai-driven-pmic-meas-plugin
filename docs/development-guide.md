@@ -31,15 +31,25 @@ The generator command scaffolds the required project structure. It must be run v
 Poetry so that it uses the project's own virtual environment:
 
 ```bash
-poetry run ni-measurement-plugin-generator <measurement_name>
+poetry run ni-measurement-plugin-generator <MeasurementName>
+```
+
+`<MeasurementName>` is the display name of the measurement (e.g. `PMICEfficiency`) and
+is independent of the plug-in directory name (`src/<measurement_name>`).
+
+The generator creates a subdirectory named `<MeasurementName>/` inside the current
+directory. Move the files up into the plug-in directory afterwards:
+
+```bash
+mv <MeasurementName>/* . && rmdir <MeasurementName>
 ```
 
 Generated files that must not be removed:
 - `measurement.py` — entry point; register configurations and outputs here
 - `_helpers.py` — logging and CLI utilities
-- `<name>.measproj` — project file for Measurement Plug-In UI Editor
-- `<name>.measui` — UI definition
-- `<name>.serviceconfig` — service registration metadata
+- `<MeasurementName>.measproj` — project file for Measurement Plug-In UI Editor
+- `<MeasurementName>.measui` — UI definition
+- `<MeasurementName>.serviceconfig` — service registration metadata
 - `start.bat` — service launcher (Windows, calls `.venv\Scripts\python.exe measurement.py`)
 
 The following files are **not** generated and must be added manually when using Poetry:
@@ -72,10 +82,7 @@ inside the project's own venv.
 
 4. Run the generator via Poetry (see **Framework Constraint** above).
 
-   The generator also produces its own `pyproject.toml`. Merge any missing dependencies
-   into the one you created in step 1 and delete the duplicate.
-
-   This creates `.venv/` which `start.bat` uses to run the service.
+   The `.venv/` created by `poetry install` is what `start.bat` uses to run the service.
 
 ## Project Structure
 

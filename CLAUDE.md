@@ -41,7 +41,7 @@ Set up the plug-in project, write `measurement.py` to satisfy the spec, and veri
 
 ```
 src/
-  pmic_efficiency/        # The PMIC efficiency measurement plug-in (to be created)
+  pmic_efficiency/        # The PMIC efficiency measurement plug-in
   examples/
     meas-plugin/          # NI reference example: nidcpower_source_dc_voltage
     nidcpower/            # Standalone nidcpower driver examples
@@ -63,6 +63,32 @@ docs/
 
 The steps below set up the Poetry virtual environment first so that
 `ni-measurement-plugin-generator` runs inside the project's own venv.
+
+### 0. Install Poetry and add it to PATH
+
+**macOS / Linux / WSL / Git Bash:**
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Add the `export` line to your shell profile (e.g. `~/.bashrc` or `~/.zshrc`) to persist it.
+
+**Windows (Command Prompt):**
+
+```bat
+(Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://install.python-poetry.org'))
+set PATH=%APPDATA%\Python\Scripts;%PATH%
+```
+
+Add `%APPDATA%\Python\Scripts` to your system PATH via System Properties → Environment Variables to persist it.
+
+Verify the installation:
+
+```bash
+poetry --version
+```
 
 ### 1. Create the plug-in directory and pyproject.toml
 
@@ -111,19 +137,24 @@ This creates `.venv/` inside the plug-in directory. All subsequent commands
 Run the generator from inside the plug-in directory using the Poetry virtual environment:
 
 ```bash
-poetry run ni-measurement-plugin-generator <measurement_name>
+poetry run ni-measurement-plugin-generator <MeasurementName>
 ```
 
-This creates the following files:
+The argument `<MeasurementName>` is the display name of the measurement (e.g. `PMICEfficiency`) and is independent of the plug-in directory name (`src/<measurement_name>`).
+
+The generator creates a subdirectory named `<MeasurementName>/` containing the following files:
 - `measurement.py` — main measurement logic (edit this)
 - `_helpers.py` — logging and CLI utilities
-- `<measurement_name>.measproj` — project file for Measurement Plug-In UI Editor
-- `<measurement_name>.measui` — UI definition
-- `<measurement_name>.serviceconfig` — service registration config
+- `<MeasurementName>.measproj` — project file for Measurement Plug-In UI Editor
+- `<MeasurementName>.measui` — UI definition
+- `<MeasurementName>.serviceconfig` — service registration config
 - `start.bat` — service launcher (calls `.venv\Scripts\python.exe measurement.py`)
 
-The generator also creates its own `pyproject.toml`. Merge any missing dependencies
-into the one you created in step 1 and delete the duplicate.
+Move all generated files up into the plug-in directory and remove the now-empty subdirectory:
+
+```bash
+mv <MeasurementName>/* . && rmdir <MeasurementName>
+```
 
 ### 5. Modify the generated files
 

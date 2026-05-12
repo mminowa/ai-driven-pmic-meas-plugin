@@ -1,5 +1,0 @@
-hightime
-matplotlib
-ni_measurement_plugin_sdk
-nidcpower
-pyyaml
