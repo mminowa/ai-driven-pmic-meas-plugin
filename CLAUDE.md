@@ -47,6 +47,7 @@ src/
     nidcpower/            # Standalone nidcpower driver examples
 docs/
   specs/                  # Formal specifications (written before implementation)
+  test-design.md          # Test strategy and test case definitions (Phase 2)
   development-guide.md    # Human-readable development process guide
 ```
 

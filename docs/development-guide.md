@@ -27,10 +27,11 @@ All measurement logic must be implemented as an **NI Measurement Plug-In** using
 - Manages instrument sessions via pin maps and the NI session management service
 - Provides a UI layer through `.measui` files
 
-The generator command scaffolds the required project structure:
+The generator command scaffolds the required project structure. It must be run via
+Poetry so that it uses the project's own virtual environment:
 
 ```bash
-ni-measurement-plugin-generator <measurement_name>
+poetry run ni-measurement-plugin-generator <measurement_name>
 ```
 
 Generated files that must not be removed:
@@ -49,9 +50,13 @@ The following files are **not** generated and must be added manually when using 
 
 ## Dependency Management
 
-Dependencies are managed with **Poetry**. After generating the scaffold:
+Dependencies are managed with **Poetry**. The virtual environment must be created
+**before** running the generator so that `ni-measurement-plugin-generator` runs
+inside the project's own venv.
 
-1. Add required packages (e.g., `nidcpower`) to `pyproject.toml`.
+1. Create `pyproject.toml` manually with `ni_measurement_plugin_sdk`, `nidcpower`, and
+   any other required packages. Use
+   `src/examples/meas-plugin/nidcpower_source_dc_voltage/pyproject.toml` as a template.
 2. Create `poetry.toml` to keep the virtual environment inside the project:
 
    ```toml
@@ -59,11 +64,16 @@ Dependencies are managed with **Poetry**. After generating the scaffold:
    in-project = true
    ```
 
-3. Install dependencies:
+3. Install dependencies (this creates `.venv/`):
 
    ```bash
    poetry install
    ```
+
+4. Run the generator via Poetry (see **Framework Constraint** above).
+
+   The generator also produces its own `pyproject.toml`. Merge any missing dependencies
+   into the one you created in step 1 and delete the duplicate.
 
    This creates `.venv/` which `start.bat` uses to run the service.
 
@@ -90,6 +100,7 @@ src/
 docs/
   specs/                        # One Markdown file per test specification
   development-guide.md          # This file
+  test-design.md                # Test strategy and test case definitions (Phase 2)
 ```
 
 ## Specification Document Format
@@ -126,10 +137,11 @@ What this measurement verifies and why.
 
 ## Test Flow
 Step-by-step description of what the measurement does.
-
-## Pass/Fail Criteria
-Conditions under which the result is considered a pass or fail.
 ```
+
+> Pass/fail judgment is the responsibility of the caller (TestStand or InstrumentStudio
+> session), not the plug-in. Do not add pass/fail criteria to spec documents.
+> Test cases and verification criteria belong in `docs/test-design.md`.
 
 ## Instrument Control Design
 
