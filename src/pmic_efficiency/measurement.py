@@ -388,7 +388,7 @@ def measure(
         aperture_time=aperture_time,
     )
 
-    with measurement_service.context.reserve_sessions(source_pin + load_pin) as reservation:
+    with measurement_service.context.reserve_sessions(list(source_pin) + list(load_pin)) as reservation:
         with reservation.initialize_nidcpower_sessions() as session_infos:
             source_session = _find_session(session_infos, source_pin[0])
             load_session = _find_session(session_infos, load_pin[0])
