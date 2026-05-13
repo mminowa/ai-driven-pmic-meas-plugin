@@ -7,7 +7,7 @@ with simulated nidcpower sessions.
 These tests will fail with ImportError until Phase 3 (measurement.py is implemented).
 
 Simulation caveat: simulated sessions do not return realistic voltage/current values.
-Tests validate structure and state (array shapes, output_enabled), not numerical accuracy.
+Tests validate structure and state (array lengths, output_enabled), not numerical accuracy.
 """
 
 import math
@@ -92,10 +92,18 @@ class TestRunPowerOn:
 # ---------------------------------------------------------------------------
 
 
+def _consume_measurement_generator(source_session, load_session, **kwargs):
+    """Consume the _run_measurement generator and return the final result."""
+    result = None
+    for result in _run_measurement(source_session, load_session, **kwargs):
+        pass
+    return result
+
+
 class TestRunMeasurement:
     @pytest.fixture()
     def result(self, source_session, load_session):
-        return _run_measurement(
+        return _consume_measurement_generator(
             source_session,
             load_session,
             vin_levels=_VIN_LEVELS,
@@ -104,16 +112,22 @@ class TestRunMeasurement:
             **_COMMON_PARAMS,
         )
 
-    # 2-2: output shapes
-    def test_2d_array_shapes(self, result) -> None:
-        expected = (len(_VIN_LEVELS), len(_IOUT_LEVELS))
-        assert result.vin_measurements.shape == expected
-        assert result.iin_measurements.shape == expected
-        assert result.vout_measurements.shape == expected
-        assert result.iout_measurements.shape == expected
-        assert result.pin_measurements.shape == expected
-        assert result.pout_measurements.shape == expected
-        assert result.efficiency.shape == expected
+    # 2-2: output lengths
+    def test_1d_array_lengths(self, result) -> None:
+        expected_len = len(_VIN_LEVELS) * len(_IOUT_LEVELS)
+        assert len(result.vin_measurements) == expected_len
+        assert len(result.iin_measurements) == expected_len
+        assert len(result.vout_measurements) == expected_len
+        assert len(result.iout_measurements) == expected_len
+        assert len(result.pin_measurements) == expected_len
+        assert len(result.pout_measurements) == expected_len
+        assert len(result.efficiency_measurements) == expected_len
+
+    def test_efficiency_xy_shape(self, result) -> None:
+        assert len(result.efficiency) == len(_VIN_LEVELS)
+        for xy in result.efficiency:
+            assert len(xy.x_data) == len(_IOUT_LEVELS)
+            assert len(xy.y_data) == len(_IOUT_LEVELS)
 
     def test_setpoint_array_lengths(self, result) -> None:
         assert len(result.vin_setpoints) == len(_VIN_LEVELS)
@@ -125,10 +139,12 @@ class TestRunMeasurement:
 
     # 2-3: NaN handling when pin <= 0
     def test_nan_when_pin_not_positive(self, result) -> None:
+        n_iout = len(_IOUT_LEVELS)
         for i in range(len(_VIN_LEVELS)):
             for j in range(len(_IOUT_LEVELS)):
-                pin = result.pin_measurements[i, j]
-                eff = result.efficiency[i, j]
+                idx = i * n_iout + j
+                pin = result.pin_measurements[idx]
+                eff = result.efficiency_measurements[idx]
                 if pin <= 0.0:
                     assert math.isnan(eff), (
                         f"Expected NaN for pin={pin} at [{i},{j}], got {eff}"
@@ -145,13 +161,32 @@ class TestRunMeasurement:
         for j, iout in enumerate(_IOUT_LEVELS):
             assert result.iout_setpoints[j] == pytest.approx(iout)
 
+    # 2-7: intermediate yields stream partial results
+    def test_intermediate_yields(self, source_session, load_session) -> None:
+        yielded = list(
+            _run_measurement(
+                source_session,
+                load_session,
+                vin_levels=_VIN_LEVELS,
+                iout_levels=_IOUT_LEVELS,
+                cancellation_event=threading.Event(),
+                **_COMMON_PARAMS,
+            )
+        )
+        total_points = len(_VIN_LEVELS) * len(_IOUT_LEVELS)
+        # N_vin * N_iout intermediate yields (output_enabled=True) + 1 final yield
+        assert len(yielded) == total_points + 1
+        for partial in yielded[:-1]:
+            assert partial.output_enabled is True
+        assert yielded[-1].output_enabled is False
+
     # 2-6: cancellation leaves sessions in safe state
     def test_cancellation_results_in_safe_state(
         self, source_session, load_session
     ) -> None:
         cancel_event = threading.Event()
         cancel_event.set()  # pre-set: cancellation is requested before sweep starts
-        result = _run_measurement(
+        result = _consume_measurement_generator(
             source_session,
             load_session,
             vin_levels=_VIN_LEVELS,

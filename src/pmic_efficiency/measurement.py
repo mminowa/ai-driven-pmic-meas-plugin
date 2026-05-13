@@ -7,14 +7,15 @@ import logging
 import pathlib
 import sys
 import threading
+from collections.abc import Generator
 from typing import NamedTuple, Sequence
 
 import click
 import hightime
 import ni_measurement_plugin_sdk_service as nims
 import nidcpower
-import numpy as np
 from _helpers import configure_logging, verbosity_option
+from ni.protobuf.types import xydata_pb2
 
 script_or_exe = sys.executable if getattr(sys, "frozen", False) else __file__
 service_directory = pathlib.Path(script_or_exe).resolve().parent
@@ -47,16 +48,14 @@ class _ModeResult(NamedTuple):
     output_enabled: bool
     vin_setpoints: list
     iout_setpoints: list
-    vin_measurements: np.ndarray
-    iin_measurements: np.ndarray
-    pin_measurements: np.ndarray
-    vout_measurements: np.ndarray
-    iout_measurements: np.ndarray
-    pout_measurements: np.ndarray
-    efficiency: np.ndarray
-
-
-_EMPTY_2D = np.zeros((0, 0))
+    vin_measurements: list
+    iin_measurements: list
+    pin_measurements: list
+    vout_measurements: list
+    iout_measurements: list
+    pout_measurements: list
+    efficiency_measurements: list
+    efficiency: list  # list[xydata_pb2.DoubleXYData]
 
 
 def _calculate_efficiency(pout: float, pin: float) -> float:
@@ -149,13 +148,14 @@ def _run_power_on(
         output_enabled=True,
         vin_setpoints=[],
         iout_setpoints=[],
-        vin_measurements=_EMPTY_2D,
-        iin_measurements=_EMPTY_2D,
-        pin_measurements=_EMPTY_2D,
-        vout_measurements=_EMPTY_2D,
-        iout_measurements=_EMPTY_2D,
-        pout_measurements=_EMPTY_2D,
-        efficiency=_EMPTY_2D,
+        vin_measurements=[],
+        iin_measurements=[],
+        pin_measurements=[],
+        vout_measurements=[],
+        iout_measurements=[],
+        pout_measurements=[],
+        efficiency_measurements=[],
+        efficiency=[],
     )
 
 
@@ -176,16 +176,15 @@ def _run_measurement(
     load_sense: nidcpower.Sense,
     source_delay: float,
     aperture_time: float,
-) -> _ModeResult:
-    n_vin = len(vin_levels)
-    n_iout = len(iout_levels)
-    vin_meas = np.zeros((n_vin, n_iout))
-    iin_meas = np.zeros((n_vin, n_iout))
-    vout_meas = np.zeros((n_vin, n_iout))
-    iout_meas = np.zeros((n_vin, n_iout))
-    pin_meas = np.zeros((n_vin, n_iout))
-    pout_meas = np.zeros((n_vin, n_iout))
-    eff = np.full((n_vin, n_iout), float("nan"))
+) -> Generator[_ModeResult, None, None]:
+    vin_meas: list[float] = []
+    iin_meas: list[float] = []
+    vout_meas: list[float] = []
+    iout_meas: list[float] = []
+    pin_meas: list[float] = []
+    pout_meas: list[float] = []
+    eff_meas: list[float] = []
+    efficiency_xy = [xydata_pb2.DoubleXYData() for _ in vin_levels]
 
     _configure_source(
         source_session,
@@ -206,6 +205,7 @@ def _run_measurement(
         aperture_time,
     )
     timeout = source_delay + _SOURCE_COMPLETE_TIMEOUT
+
     try:
         source_session.initiate()
         source_session.wait_for_event(nidcpower.Event.SOURCE_COMPLETE, timeout=timeout)
@@ -230,13 +230,33 @@ def _run_measurement(
 
                 src = source_session.measure_multiple()[0]
                 lod = load_session.measure_multiple()[0]
-                vin_meas[i, j] = src.voltage
-                iin_meas[i, j] = src.current
-                vout_meas[i, j] = lod.voltage
-                iout_meas[i, j] = lod.current
-                pin_meas[i, j] = _calculate_power(src.voltage, src.current)
-                pout_meas[i, j] = _calculate_power(lod.voltage, lod.current)
-                eff[i, j] = _calculate_efficiency(pout_meas[i, j], pin_meas[i, j])
+                pin = _calculate_power(src.voltage, src.current)
+                pout = _calculate_power(lod.voltage, lod.current)
+                eta = _calculate_efficiency(pout, pin)
+
+                vin_meas.append(src.voltage)
+                iin_meas.append(src.current)
+                vout_meas.append(lod.voltage)
+                iout_meas.append(lod.current)
+                pin_meas.append(pin)
+                pout_meas.append(pout)
+                eff_meas.append(eta)
+                efficiency_xy[i].x_data.append(iout)
+                efficiency_xy[i].y_data.append(eta)
+
+                yield _ModeResult(
+                    output_enabled=True,
+                    vin_setpoints=list(vin_levels),
+                    iout_setpoints=list(iout_levels),
+                    vin_measurements=list(vin_meas),
+                    iin_measurements=list(iin_meas),
+                    pin_measurements=list(pin_meas),
+                    vout_measurements=list(vout_meas),
+                    iout_measurements=list(iout_meas),
+                    pout_measurements=list(pout_meas),
+                    efficiency_measurements=list(eff_meas),
+                    efficiency=list(efficiency_xy),
+                )
 
             if cancelled:
                 break
@@ -244,17 +264,18 @@ def _run_measurement(
         source_session.reset()
         load_session.reset()
 
-    return _ModeResult(
+    yield _ModeResult(
         output_enabled=False,
         vin_setpoints=list(vin_levels),
         iout_setpoints=list(iout_levels),
-        vin_measurements=vin_meas,
-        iin_measurements=iin_meas,
-        pin_measurements=pin_meas,
-        vout_measurements=vout_meas,
-        iout_measurements=iout_meas,
-        pout_measurements=pout_meas,
-        efficiency=eff,
+        vin_measurements=list(vin_meas),
+        iin_measurements=list(iin_meas),
+        pin_measurements=list(pin_meas),
+        vout_measurements=list(vout_meas),
+        iout_measurements=list(iout_meas),
+        pout_measurements=list(pout_meas),
+        efficiency_measurements=list(eff_meas),
+        efficiency=list(efficiency_xy),
     )
 
 
@@ -268,13 +289,14 @@ def _run_power_off(
         output_enabled=False,
         vin_setpoints=[],
         iout_setpoints=[],
-        vin_measurements=_EMPTY_2D,
-        iin_measurements=_EMPTY_2D,
-        pin_measurements=_EMPTY_2D,
-        vout_measurements=_EMPTY_2D,
-        iout_measurements=_EMPTY_2D,
-        pout_measurements=_EMPTY_2D,
-        efficiency=_EMPTY_2D,
+        vin_measurements=[],
+        iin_measurements=[],
+        pin_measurements=[],
+        vout_measurements=[],
+        iout_measurements=[],
+        pout_measurements=[],
+        efficiency_measurements=[],
+        efficiency=[],
     )
 
 
@@ -322,13 +344,14 @@ def _run_power_off(
 @measurement_service.output("Output Enabled", nims.DataType.Boolean)
 @measurement_service.output("Vin Setpoints (V)", nims.DataType.DoubleArray1D)
 @measurement_service.output("Iout Setpoints (A)", nims.DataType.DoubleArray1D)
-@measurement_service.output("Vin Measurements (V)", nims.DataType.Double2DArray)
-@measurement_service.output("Iin Measurements (A)", nims.DataType.Double2DArray)
-@measurement_service.output("Pin Measurements (W)", nims.DataType.Double2DArray)
-@measurement_service.output("Vout Measurements (V)", nims.DataType.Double2DArray)
-@measurement_service.output("Iout Measurements (A)", nims.DataType.Double2DArray)
-@measurement_service.output("Pout Measurements (W)", nims.DataType.Double2DArray)
-@measurement_service.output("Efficiency (pct)", nims.DataType.Double2DArray)
+@measurement_service.output("Vin Measurements (V)", nims.DataType.DoubleArray1D)
+@measurement_service.output("Iin Measurements (A)", nims.DataType.DoubleArray1D)
+@measurement_service.output("Pin Measurements (W)", nims.DataType.DoubleArray1D)
+@measurement_service.output("Vout Measurements (V)", nims.DataType.DoubleArray1D)
+@measurement_service.output("Iout Measurements (A)", nims.DataType.DoubleArray1D)
+@measurement_service.output("Pout Measurements (W)", nims.DataType.DoubleArray1D)
+@measurement_service.output("Efficiency Measurements (pct)", nims.DataType.DoubleArray1D)
+@measurement_service.output("Efficiency", nims.DataType.DoubleXYDataArray1D)
 def measure(
     measurement_mode: MeasurementMode,
     source_pin: list[str],
@@ -345,7 +368,7 @@ def measure(
     load_sense: SenseMode,
     source_delay: float,
     aperture_time: float,
-) -> tuple:
+) -> Generator[tuple, None, None]:
     """Measure PMIC conversion efficiency across Vin and Iout sweep points."""
     logging.info("Executing measurement: mode=%s", measurement_mode.name)
 
@@ -372,30 +395,37 @@ def measure(
 
             if measurement_mode == MeasurementMode.POWER_ON_DUT:
                 result = _run_power_on(source_session, load_session, **common)
+                yield _result_to_tuple(result)
             elif measurement_mode == MeasurementMode.PERFORM_MEASUREMENT:
-                result = _run_measurement(
+                for result in _run_measurement(
                     source_session,
                     load_session,
                     vin_levels=vin_levels,
                     iout_levels=iout_levels,
                     cancellation_event=cancellation_event,
                     **common,
-                )
+                ):
+                    yield _result_to_tuple(result)
             else:
                 result = _run_power_off(source_session, load_session)
+                yield _result_to_tuple(result)
 
     logging.info("Completed measurement: output_enabled=%s", result.output_enabled)
+
+
+def _result_to_tuple(result: _ModeResult) -> tuple:
     return (
         result.output_enabled,
         result.vin_setpoints,
         result.iout_setpoints,
-        result.vin_measurements.tolist(),
-        result.iin_measurements.tolist(),
-        result.pin_measurements.tolist(),
-        result.vout_measurements.tolist(),
-        result.iout_measurements.tolist(),
-        result.pout_measurements.tolist(),
-        result.efficiency.tolist(),
+        result.vin_measurements,
+        result.iin_measurements,
+        result.pin_measurements,
+        result.vout_measurements,
+        result.iout_measurements,
+        result.pout_measurements,
+        result.efficiency_measurements,
+        result.efficiency,
     )
 
 
