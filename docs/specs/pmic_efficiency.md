@@ -64,23 +64,27 @@ Pin map file: `PMICEfficiency.pinmap`
 
 ## Sweep Structure
 
-The measurement performs a two-dimensional sweep:
+The measurement performs a two-dimensional sweep and streams partial results in real time via `yield`:
 
 ```
-for each Vin in vin_levels:          # outer loop  [row index]
+for each Vin in vin_levels:          # outer loop  [index i]
     set VIN pin to Vin (DC voltage source)
-    for each Iout in iout_levels:    # inner loop  [column index]
+    for each Iout in iout_levels:    # inner loop  [index j]
         set VOUT pin to Iout (DC current sink)
         wait source_delay
         measure Vin_meas, Iin_meas on VIN pin
         measure Vout_meas, Iout_meas on VOUT pin
-        calculate Pin, Pout, efficiency
-        store results at [row, col] in 2D output arrays
+        calculate Pin, Pout, η
+        append results to 1D measurement arrays
+        append η to efficiency_measurements
+        append (x=Iout, y=η) to efficiency[i]
+        yield current state of all outputs   # real-time update
 ```
 
-Output array shape: `[len(vin_levels), len(iout_levels)]`
-- Row index corresponds to `vin_levels`
-- Column index corresponds to `iout_levels`
+1D measurement array length after the full sweep: `len(vin_levels) × len(iout_levels)`.  
+Ordering is row-major: all Iout values for `vin_levels[0]`, then all for `vin_levels[1]`, and so on.
+
+`efficiency` (`DoubleXYData[]`) has length `len(vin_levels)`. Each element is built incrementally: within the inner loop, one `(x=Iout, y=η)` point is appended per Iout step. A yielded snapshot contains all points measured so far — partial curves for the current Vin row, complete curves for previous rows.
 
 ---
 
@@ -96,24 +100,28 @@ Sweep-axis arrays (1D):
 
 | Output | Type | Unit | Shape | Description |
 |---|---|---|---|---|
-| `vin_setpoints` | Double[] | V | `[N_vin]` | Vin setpoints (row axis of the 2D arrays) |
-| `iout_setpoints` | Double[] | A | `[N_iout]` | Iout setpoints (column axis of the 2D arrays) |
+| `vin_setpoints` | Double[] | V | `[N_vin]` | Vin setpoints — outer-loop (Vin) axis |
+| `iout_setpoints` | Double[] | A | `[N_iout]` | Iout setpoints — inner-loop (Iout) axis; also the X values of each `efficiency` DoubleXYData element |
 
-Measurement arrays (2D, shape `[N_vin, N_iout]`):
+Measurement arrays (1D, length `N_vin × N_iout`, row-major order):
 
 | Output | Type | Unit | Description |
 |---|---|---|---|
-| `vin_measurements` | Double[,] | V | Measured input voltage |
-| `iin_measurements` | Double[,] | A | Measured input current |
-| `pin_measurements` | Double[,] | W | Calculated input power: `Pin = Vin_meas × Iin_meas` |
-| `vout_measurements` | Double[,] | V | Measured output voltage |
-| `iout_measurements` | Double[,] | A | Measured output current |
-| `pout_measurements` | Double[,] | W | Calculated output power: `Pout = Vout_meas × Iout_meas` |
-| `efficiency` | Double[,] | % | Conversion efficiency: `η = (Pout / Pin) × 100` |
+| `vin_measurements` | Double[] | V | Measured input voltage |
+| `iin_measurements` | Double[] | A | Measured input current |
+| `pin_measurements` | Double[] | W | Calculated input power: `Pin = Vin_meas × Iin_meas` |
+| `vout_measurements` | Double[] | V | Measured output voltage |
+| `iout_measurements` | Double[] | A | Measured output current |
+| `pout_measurements` | Double[] | W | Calculated output power: `Pout = Vout_meas × Iout_meas` |
+| `efficiency_measurements` | Double[] | % | Conversion efficiency: `η = (Pout / Pin) × 100`. `NaN` when `Pin ≤ 0`. |
 
-> 2D array output is supported from NI InstrumentStudio 2025 Q4.
+Efficiency graph output (DoubleXYData array):
 
-In **Power on the DUT** and **Power off the DUT** modes, all array outputs are returned as empty arrays.
+| Output | Type | Unit | Description |
+|---|---|---|---|
+| `efficiency` | DoubleXYData[] | % | Conversion efficiency curves, one element per Vin level. X = `iout_setpoints` (A); Y = `η = (Pout / Pin) × 100` at each Iout. Length = `N_vin`. |
+
+In **Power on the DUT** and **Power off the DUT** modes, all array outputs are yielded as empty arrays (single `yield`).
 
 ---
 
@@ -150,7 +158,7 @@ All modes share the following common steps at the start and end.
 4. Enable outputs on both sessions. Set `output_enabled = True`.
 5. Wait for `SOURCE_COMPLETE` on both sessions.
 6. Release instrument sessions.
-7. Return empty array outputs (`output_enabled = True`).
+7. **`yield`** empty array outputs (`output_enabled = True`).
 
 The DUT is now powered at `source_initial_voltage` (VIN) and `load_initial_current` (VOUT). Outputs remain active.
 
@@ -160,10 +168,12 @@ The DUT is now powered at `source_initial_voltage` (VIN) and `load_initial_curre
 
 4. Enable outputs on both sessions. Set `output_enabled = True`. Wait for `SOURCE_COMPLETE` on each.
 
-5. For each `Vin` in `vin_levels` (outer loop, row index `i`):
+5. Initialize `efficiency` as a `DoubleXYData[]` of length `N_vin`; each element is a new, empty `DoubleXYData` object. Initialize all 1D measurement arrays and `efficiency_measurements` as empty lists.
+
+6. For each `Vin` in `vin_levels` (outer loop, index `i`):
    a. Set `VIN` voltage level to `Vin`.
    b. Wait for `SOURCE_COMPLETE` event on `VIN`.
-   c. For each `Iout` in `iout_levels` (inner loop, column index `j`):
+   c. For each `Iout` in `iout_levels` (inner loop, index `j`):
       - Check for cancellation.
       - Set `VOUT` current level to `Iout`.
       - Wait for `SOURCE_COMPLETE` event on `VOUT`.
@@ -171,12 +181,16 @@ The DUT is now powered at `source_initial_voltage` (VIN) and `load_initial_curre
       - Measure `Vout_meas`, `Iout_meas` from the `VOUT` session.
       - Calculate `Pin = Vin_meas × Iin_meas`.
       - Calculate `Pout = Vout_meas × Iout_meas`.
-      - Calculate `η = (Pout / Pin) × 100`. If `Pin ≤ 0`, store `NaN`.
-      - Store all values at `[i, j]` in the 2D output arrays.
+      - Calculate `η = (Pout / Pin) × 100`. If `Pin ≤ 0`, use `NaN`.
+      - Append `Vin_meas`, `Iin_meas`, `Pin`, `Vout_meas`, `Iout_meas`, `Pout`, `η` to the corresponding 1D measurement arrays.
+      - Append `x = Iout`, `y = η` to `efficiency[i]`.
+      - **`yield` all current outputs** (partial results; `output_enabled = True`).
 
-6. Reset both sessions to a known safe state (disable outputs). Set `output_enabled = False`.
-7. Release instrument sessions.
-8. Return all output arrays populated with measurement results (`output_enabled = False`).
+7. Reset both sessions to a known safe state (disable outputs). Set `output_enabled = False`.
+8. Release instrument sessions.
+9. **`yield` all output arrays** fully populated with measurement results (`output_enabled = False`).
+
+> The `measure()` function is a generator. It uses `yield` (not `return`) to stream partial outputs after every Iout step. The final `yield` carries `output_enabled = False` and the completed arrays. The UI graph updates incrementally as each point arrives.
 
 ---
 
@@ -184,25 +198,27 @@ The DUT is now powered at `source_initial_voltage` (VIN) and `load_initial_curre
 
 4. Reset both sessions to a known safe state (disable outputs). Set `output_enabled = False`.
 5. Release instrument sessions.
-6. Return empty array outputs (`output_enabled = False`).
+6. **`yield`** empty array outputs (`output_enabled = False`).
 
 ---
 
 ## UI Visualization
 
-The `.measui` file shall include an XY Graph configured as follows:
+The `.measui` file shall include an XY Graph bound directly to the `efficiency` output (`DoubleXYData[]`):
 
 | Property | Value |
 |---|---|
-| X-axis data | `iout_setpoints` (A) |
-| Y-axis data | `efficiency` rows — one plot series per row (i.e., per Vin level) |
+| Data source | `efficiency` (DoubleXYData[]) |
+| X-axis | X values of each DoubleXYData element — `iout_setpoints` (A) |
+| Y-axis | Y values of each DoubleXYData element — efficiency (%) |
+| Series | One plot series per element (i.e., per Vin level) |
 | Series color | Distinct color per Vin level |
 | X-axis label | Output Current (A) |
 | Y-axis label | Efficiency (%) |
 | Legend | Labeled with the corresponding Vin setpoint value |
 | Title | PMIC Efficiency vs. Output Current |
 
-The result is a family of efficiency curves — one per Vin level — allowing visual comparison of efficiency across input voltage conditions.
+Because `measure()` yields after every Iout step, the graph updates in real time: curves grow point-by-point as the sweep progresses. The final frame shows the complete family of efficiency curves — one per Vin level.
 
 ---
 
