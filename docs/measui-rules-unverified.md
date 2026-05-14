@@ -1,7 +1,7 @@
 # .measui Authoring Rules — Quick Reference
 
 > **DISCLAIMER — Unverified / Empirical**
-> Rules inferred from 13 official NI sample files in `measurement-plugin-python-examples-3.1.0.zip`
+> Rules inferred from 12 official NI sample files in `measurement-plugin-python-examples-3.1.0.zip`
 > ([github.com/ni/measurement-plugin-python](https://github.com/ni/measurement-plugin-python)).
 > Not derived from a formal NI specification. Some rules confirmed empirically; many are
 > unverified inferences. See [measui-authoring-guide-unverified.md](measui-authoring-guide-unverified.md)
