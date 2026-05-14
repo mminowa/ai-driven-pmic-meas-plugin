@@ -2,12 +2,12 @@
 
 > **DISCLAIMER — Unverified / Empirical**
 >
-> The rules in this guide are **inferred by pattern-matching across the 13 official NI
+> The rules in this guide are **inferred by pattern-matching across the 12 official NI
 > sample `.measui` files** from
 > [`measurement-plugin-python-examples-3.1.0.zip`](https://github.com/ni/measurement-plugin-python)
 > (stored locally in `src/examples/meas-plugin/`). This is **not** derived from a
 > formal NI specification of the SFP XML format. Rules described as causing parse
-> errors are identified by the absence of the pattern in all 13 samples, not by
+> errors are identified by the absence of the pattern in all 12 samples, not by
 > exhaustive testing. Some rules have been confirmed empirically during development of
 > `PMICEfficiency.measui`, but many remain unverified inferences. Treat this guide
 > as a working hypothesis, not a specification.
@@ -18,7 +18,7 @@ outside the GUI editor.
 
 **Verification status**: Partially empirical — see disclaimer above
 
-**Source of truth**: 13 official NI sample files from `measurement-plugin-python-examples-3.1.0.zip` (`src/examples/meas-plugin/`)
+**Source of truth**: 12 official NI sample files from `measurement-plugin-python-examples-3.1.0.zip` (`src/examples/meas-plugin/`)
 
 ---
 
@@ -358,7 +358,7 @@ screen-relative otherwise). Can be placed inside or outside a canvas.
 
 **Standalone label** (no `LabelOwner`): **NOT SUPPORTED — causes a parse error.**
 
-All 13 NI sample files contain zero `Label` elements without `LabelOwner`. The NI parser
+All 12 NI sample files contain zero `Label` elements without `LabelOwner`. The NI parser
 rejects any `Label` that lacks `LabelOwner`. If you need section header text, the only
 supported approach is a canvas title label (a `Label` with `LabelOwner` pointing to a
 `ScreenSurfaceCanvas`). There is no equivalent for inline section headers between controls.
@@ -760,7 +760,7 @@ Every data control has a `Channel` attribute that links it to a measurement para
 
 Element `Id` attributes and `[UIModel]<id>` cross-references use **lowercase hexadecimal
 strings with no dashes**. Most are 32 characters, but NI-published samples contain IDs of
-30 and 31 characters that parse correctly (11 of 13 samples contain at least one shorter ID).
+30 and 31 characters that parse correctly (11 of 12 samples contain at least one shorter ID).
 When hand-authoring, 32 characters is the safest choice:
 
 ```
