@@ -1,0 +1,21 @@
+{
+  "services": [
+    {
+      "displayName": "NI-VISA DMM Measurement (Py)",
+      "version": "1.0.0",
+      "serviceClass": "ni.examples.NIVisaDmmMeasurement_Python",
+      "descriptionUrl": "",
+      "providedInterfaces": [
+        "ni.measurementlink.measurement.v1.MeasurementService",
+        "ni.measurementlink.measurement.v2.MeasurementService"
+      ],
+      "path": "start.bat",
+      "installPath": "install.bat",
+      "annotations": {
+        "ni/service.description": "Measurement plug-in example that performs a DMM measurement using NI-VISA and an NI Instrument Simulator v2.0.",
+        "ni/service.collection": "NI.Examples",
+        "ni/service.tags": []
+      }
+    }
+  ]
+}

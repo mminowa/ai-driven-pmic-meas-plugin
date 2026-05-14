@@ -1,0 +1,21 @@
+{
+  "services": [
+    {
+      "displayName": "NI-SWITCH Control Relays (Py)",
+      "version": "1.0.0",
+      "serviceClass": "ni.examples.NISwitchControlRelays_Python",
+      "descriptionUrl": "",
+      "providedInterfaces": [
+        "ni.measurementlink.measurement.v1.MeasurementService",
+        "ni.measurementlink.measurement.v2.MeasurementService"
+      ],
+      "path": "start.bat",
+      "installPath": "install.bat",
+      "annotations": {
+        "ni/service.description": "Measurement plug-in example that controls relays using an NI relay driver (e.g. PXI-2567).",
+        "ni/service.collection": "NI.Examples",
+        "ni/service.tags": []
+      }
+    }
+  ]
+}
