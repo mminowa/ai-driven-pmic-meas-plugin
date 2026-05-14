@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "sample_measurement"
+version = "0.5.0"
+package-mode = false
+description = "Measurement plug-in example that performs a loopback measurement with various data types."
+authors = ["National Instruments"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ni-measurement-plugin-sdk-service = {version = ">=2.3.1,<4.0"}
+click = ">=7.1.2, !=8.1.4" # mypy fails with click 8.1.4: https://github.com/pallets/click/issues/2558
+ni-protobuf-types = { version = ">=0.1.0dev2", allow-prereleases = true }
+
+[tool.poetry.group.dev.dependencies]
+ni-python-styleguide = ">=0.4.1"
+mypy = ">=1.0"
+types-grpcio = ">=1.0"
+grpcio-tools = "1.49.1"
+mypy-protobuf = "^3.6.0"
+types-protobuf = ">=4.21"
+# Uncomment to use prerelease dependencies.
+# ni-measurement-plugin-sdk-service = {path = "../../packages/service", develop = true}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    # numpy has type hints but this example does not depend on numpy.
+    "numpy.*",
+]
+ignore_missing_imports = true
+
+[tool.ni-python-styleguide]
+extend_exclude = '*_pb2_grpc.py,*_pb2_grpc.pyi,*_pb2.py,*_pb2.pyi'

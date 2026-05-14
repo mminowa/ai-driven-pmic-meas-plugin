@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "nidaqmx_analog_input"
+version = "0.5.0"
+package-mode = false
+description = "Measurement plug-in example that performs a finite analog input measurement with NI-DAQmx."
+authors = ["National Instruments"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+nidaqmx = { version = ">=0.8.0", extras = ["grpc"] }
+ni-measurement-plugin-sdk-service = {version = ">=2.3.1,<4.0"}
+click = ">=7.1.2, !=8.1.4" # mypy fails with click 8.1.4: https://github.com/pallets/click/issues/2558
+
+[tool.poetry.group.dev.dependencies]
+ni-python-styleguide = ">=0.4.1"
+mypy = ">=1.0"
+types-grpcio = ">=1.0"
+# Uncomment to use prerelease dependencies.
+# nidaqmx = { git = "https://github.com/ni/nidaqmx-python.git", branch = "master", extras = ["grpc"] }
+# ni-measurement-plugin-sdk-service = {path = "../../packages/service", develop = true}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "nidaqmx.*",
+]
+ignore_missing_imports = true
