@@ -1,5 +1,7 @@
 # AI-Driven PMIC Efficiency Measurement Plug-In
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A Python-based **Measurement Plug-In** for testing PMIC (Power Management IC) power conversion efficiency, built on the [NI Measurement Plug-Ins](https://www.ni.com/docs/en-US/bundle/measurementplugins/page/python-measurements.html) framework.
 
 ## Overview
@@ -21,6 +23,10 @@ This plug-in automates PMIC efficiency characterization by:
                               η = Pout / Pin × 100%
 ```
 
+## UI
+
+<img src="docs/images/pmic-efficiency-ui.png" alt="PMIC Efficiency UI in NI InstrumentStudio" width="80%">
+
 ## Hardware Requirements
 
 | Role | Example Hardware | Driver |
@@ -38,20 +44,16 @@ This plug-in automates PMIC efficiency characterization by:
 
 ## Getting Started
 
-### 1. Install Python dependencies
-
-```bash
-python -m pip install ni_measurement_plugin_sdk nidcpower
-```
-
-### 2. Install the plug-in
+### 1. Install the plug-in
 
 ```bash
 cd src/pmic_efficiency
 install.bat
 ```
 
-### 3. Start the measurement service
+> `install.bat` runs `poetry install --only main`. [Poetry](https://python-poetry.org/docs/) must be installed and on your PATH.
+
+### 2. Start the measurement service
 
 ```bash
 start.bat
@@ -83,13 +85,13 @@ src/
     nidcpower/            # Standalone nidcpower driver examples
 docs/
   specs/                  # Formal test specifications
-  development-guide.md    # Development process and design decisions
+  test-design.md          # Test strategy and test case definitions
 ```
 
 ## Development
 
-This project uses **Specification-Driven Development**. See [docs/development-guide.md](docs/development-guide.md) for the full development process.
+This project uses **Specification-Driven Development**. See [CLAUDE.md](CLAUDE.md) for the full development process and contribution guidelines.
 
 ## License
 
-See [LICENSE](LICENSE).
+[MIT License](LICENSE) © 2026 mminowa
