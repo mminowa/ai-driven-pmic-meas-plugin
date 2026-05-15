@@ -1,0 +1,21 @@
+{
+  "services": [
+    {
+      "displayName": "NI-SCOPE Acquire Waveform (Py)",
+      "version": "1.0.0",
+      "serviceClass": "ni.examples.NIScopeAcquireWaveform_Python",
+      "descriptionUrl": "",
+      "providedInterfaces": [
+        "ni.measurementlink.measurement.v1.MeasurementService",
+        "ni.measurementlink.measurement.v2.MeasurementService"
+      ],
+      "path": "start.bat",
+      "installPath": "install.bat",
+      "annotations": {
+        "ni/service.description": "Measurement plug-in example that acquires a waveform using an NI oscilloscope.",
+        "ni/service.collection": "NI.Examples",
+        "ni/service.tags": []
+      }
+    }
+  ]
+}

@@ -1,3 +1,6 @@
+# Windows NTFS alternate data streams (Zone.Identifier, etc.)
+*:*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

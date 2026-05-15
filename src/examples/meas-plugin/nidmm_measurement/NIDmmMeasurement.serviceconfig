@@ -1,0 +1,21 @@
+{
+  "services": [
+    {
+      "displayName": "NI-DMM Measurement (Py)",
+      "version": "1.0.0",
+      "serviceClass": "ni.examples.NIDmmMeasurement_Python",
+      "descriptionUrl": "",
+      "providedInterfaces": [
+        "ni.measurementlink.measurement.v1.MeasurementService",
+        "ni.measurementlink.measurement.v2.MeasurementService"
+      ],
+      "path": "start.bat",
+      "installPath": "install.bat",
+      "annotations": {
+        "ni/service.description": "Measurement plug-in example that performs a measurement using an NI DMM.",
+        "ni/service.collection": "NI.Examples",
+        "ni/service.tags": []
+      }
+    }
+  ]
+}
