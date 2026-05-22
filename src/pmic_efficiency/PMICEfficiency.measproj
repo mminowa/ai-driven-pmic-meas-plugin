@@ -1,12 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
-<SourceFile Checksum="45C379C12E21531099FA05BA0133A871C1484C2D21AE60D19E992798D99A4020F84B7105887E5560BD63521128915683E687C64C7E275FA176574FC5AEB48A6E" xmlns="http://www.ni.com/PlatformFramework">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<SourceFile Checksum="BE253263CF189BB196DC0FDA74FA1033772547A8BD9D91FF555714D0444EFAC735573A97508302926D102493DA28BE698B3B5A41D177AD64DDE150784DB809E0" xmlns="http://www.ni.com/PlatformFramework">
 	<SourceModelFeatureSet>
-		<ParsableNamespace AssemblyFileVersion="24.8.0.49911" FeatureSetName="InstrumentStudio Measurement UI" Name="http://www.ni.com/InstrumentFramework/ScreenDocument" OldestCompatibleVersion="22.1.0.1" Version="24.8.0.0" />
-		<ParsableNamespace AssemblyFileVersion="9.14.0.49911" FeatureSetName="Editor" Name="http://www.ni.com/PlatformFramework" OldestCompatibleVersion="8.1.0.49152" Version="8.1.0.49152" />
-		<ParsableNamespace AssemblyFileVersion="9.14.0.49911" FeatureSetName="SystemDesigner" Name="http://www.ni.com/SystemDesigner/EnvoyManagement" OldestCompatibleVersion="5.0.0.0" Version="5.0.0.49152" />
-		<ParsableNamespace AssemblyFileVersion="9.14.0.49911" FeatureSetName="SystemDesigner" Name="http://www.ni.com/SystemDesigner/SystemDiagram" OldestCompatibleVersion="8.0.0.49152" Version="8.0.0.49152" />
-		<ParsableNamespace AssemblyFileVersion="9.14.0.49911" FeatureSetName="SystemDesigner" Name="http://www.ni.com/SystemDesigner/SystemModelCore" OldestCompatibleVersion="5.1.0.5" Version="5.2.0.49152" />
-		<ApplicationVersionInfo Build="24.8.0.49911" Name="Measurement Plug-In UI Editor" Version="24.8.0.49911" />
+		<ParsableNamespace AssemblyFileVersion="25.8.0.49945" FeatureSetName="Pin Map" Name="http://www.ni.com/InstrumentFramework/PinMap" OldestCompatibleVersion="21.3.0.0" Version="21.3.0.0" />
+		<ParsableNamespace AssemblyFileVersion="25.8.0.49945" FeatureSetName="InstrumentStudio Measurement UI" Name="http://www.ni.com/InstrumentFramework/ScreenDocument" OldestCompatibleVersion="22.1.0.1" Version="24.8.0.0" />
+		<ParsableNamespace AssemblyFileVersion="9.18.0.49946" FeatureSetName="Editor" Name="http://www.ni.com/PlatformFramework" OldestCompatibleVersion="8.1.0.49152" Version="8.1.0.49152" />
+		<ParsableNamespace AssemblyFileVersion="9.18.0.49945" FeatureSetName="SystemDesigner" Name="http://www.ni.com/SystemDesigner/EnvoyManagement" OldestCompatibleVersion="5.0.0.0" Version="5.0.0.49152" />
+		<ParsableNamespace AssemblyFileVersion="9.18.0.49945" FeatureSetName="SystemDesigner" Name="http://www.ni.com/SystemDesigner/SystemDiagram" OldestCompatibleVersion="8.0.0.49152" Version="8.0.0.49152" />
+		<ParsableNamespace AssemblyFileVersion="9.18.0.49945" FeatureSetName="SystemDesigner" Name="http://www.ni.com/SystemDesigner/SystemModelCore" OldestCompatibleVersion="5.1.0.5" Version="5.2.0.49152" />
+		<ApplicationVersionInfo Build="25.8.0.49945" Name="Measurement Plug-In UI Editor" Version="25.8.0.49945" />
 	</SourceModelFeatureSet>
 	<Project xmlns="http://www.ni.com/PlatformFramework">
 		<EnvoyManagerRootEnvoy Id="dd27c2d5c720415eb15215bd545c9daa" ModelDefinitionType="EnvoyManagerRootEnvoy" Name="RootEnvoy" />
@@ -16,6 +17,7 @@
 		<NameScopingEnvoy Id="595eaf9348434a23ae9cd79306a9f1cb" ModelDefinitionType="DefaultTarget" Name="DefaultTarget">
 			<DefaultTarget />
 			<SourceFileReference Id="82b9ddbcdf2948238df082fc48b602b7" ModelDefinitionType="{http://www.ni.com/InstrumentFramework/ScreenDocument}Screen" Name="PMICEfficiency.measui" StoragePath="PMICEfficiency.measui" />
+			<FileReference Id="95b3502ac2474ad9b4475a142dad7c63" ModelDefinitionType="{http://www.ni.com/InstrumentFramework/PinMap}PinMapDefinition" Name="PMICEfficiency.pinmap" StoragePath="PMICEfficiency.pinmap" p4:IsActive="True" xmlns:p4="http://www.ni.com/InstrumentFramework/PinMap" />
 		</NameScopingEnvoy>
 		<EmbeddedDefinitionReference Id="e346ab41c93c4c81b47bf6d0522b5deb" ModelDefinitionType="NationalInstruments.SystemDesigner.SystemDiagram.SystemDiagramDefinition" Name="SystemDiagram">
 			<SystemDiagram Id="1a63510b9b8443258bb044b34b362c63" SystemDiagramVersion="75" xmlns="http://www.ni.com/SystemDesigner/SystemDiagram">

@@ -157,8 +157,11 @@ mv <MeasurementName>/* . && rmdir <MeasurementName>
 ### 5. Modify the generated files
 
 Edit `measurement.py` to implement the measurement logic: configuration parameters,
-output definitions, and the `measure()` function. Update `.serviceconfig` and `.measui`
-as needed.
+output definitions, and the `measure()` function. Update `.serviceconfig` as needed.
+
+To update `.measui`, follow the procedure in
+[`docs/update-measui.md`](docs/update-measui.md). Re-run that procedure whenever
+`measurement.py` configuration parameters or outputs change.
 
 ### 6. Run the measurement service
 
