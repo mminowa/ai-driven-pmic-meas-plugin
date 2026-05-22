@@ -160,6 +160,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# NI Measurement Plug-In UI Creator (temp files)
+install_ui_creator.bat
+*.whl
+ui_creator_logs/
+
 # Spyder project settings
 .spyderproject
 .spyproject
