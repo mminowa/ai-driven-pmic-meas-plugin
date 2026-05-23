@@ -2,9 +2,41 @@
 
 This file provides guidance for Claude Code when working on this project.
 
+## Project-Specific Configuration
+
+> When reusing this file for a new Measurement Plug-In project, update only this section.
+> Everything below applies to any NI Measurement Plug-In built with this framework.
+
+**What this plug-in measures:** PMIC (Power Management IC) power conversion efficiency — sweeps input voltage (Vin) and output load current (Iout) and calculates conversion efficiency at each operating point.
+
+**Plug-in directory:** `src/pmic_efficiency/`
+
+**Hardware targets:**
+
+| Role | Instrument | Driver |
+|---|---|---|
+| Input power source | NI PXIe-4151 (PPS) or any nidcpower-compatible SMU | `nidcpower` |
+| Output load | NI PXIe-4051 (Electronic Load) or any nidcpower-compatible SMU | `nidcpower` |
+
+**Simulation environment variables** (create a `.env` file in the plug-in directory):
+
+```
+MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1
+MEASUREMENT_PLUGIN_NIDCPOWER_BOARD_TYPE=PXIe
+MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4151
+```
+
+**Driver-specific reference examples in this repo:**
+
+- Measurement Plug-In example: `src/examples/meas-plugin/nidcpower_source_dc_voltage/`
+- Standalone driver examples: `src/examples/nidcpower/`
+- Electronic load example: `src/examples/nidcpower/nidcpower_sink_dc_current_into_electronic_load.py`
+
+---
+
 ## Project Overview
 
-This repository implements a **PMIC (Power Management IC) Efficiency Test Measurement Plug-In** using the NI Measurement Plug-Ins framework and Python. The plug-in measures the power conversion efficiency of a PMIC by sourcing input power with an NI PPS or SMU and sinking output load with an NI electronic load or SMU, both controlled via `nidcpower`.
+This repository contains an NI Measurement Plug-In implemented with the NI Measurement Plug-Ins framework and Python. See **Project-Specific Configuration** above for what this particular plug-in measures and which instruments it targets.
 
 ## Development Approach
 
@@ -27,7 +59,7 @@ Set up the plug-in project, write `measurement.py` to satisfy the spec, and veri
 ## Constraints
 
 - **Framework**: All measurement logic must be implemented as an NI Measurement Plug-In using `ni_measurement_plugin_sdk`. Do not bypass this framework.
-- **Instrument driver**: Use `nidcpower` for all PPS, SMU, and electronic load control.
+- **Instrument driver**: Use the driver(s) listed in **Project-Specific Configuration**. Do not use alternative APIs or bypass the driver.
 - **Language**: Python 3.10+.
 - **Documentation language**: All documentation, comments, and commit messages must be written in **English**.
 
@@ -35,25 +67,18 @@ Set up the plug-in project, write `measurement.py` to satisfy the spec, and veri
 
 - **No confidential information**: This is a public repository. Never commit credentials, internal hostnames, proprietary circuit parameters, or any customer/product-specific data.
 - **No hardcoded resource names**: Instrument resource names (e.g., `PXI1Slot2`) must come from pin maps or configuration, not hardcoded in source.
-- **Simulation support**: All code must be runnable with simulated instruments via the `MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1` env var, so CI and offline development work without hardware.
+- **Simulation support**: All code must be runnable with simulated instruments using the env vars listed in **Project-Specific Configuration**, so CI and offline development work without hardware.
 
 ## Key Directories
 
 ```
 src/
-  pmic_efficiency/        # The PMIC efficiency measurement plug-in
-  examples/
-    meas-plugin/          # NI reference example: nidcpower_source_dc_voltage
-    nidcpower/            # Standalone nidcpower driver examples
+  <plugin_name>/          # The measurement plug-in (see Project-Specific Configuration)
+  examples/               # NI reference examples (see Project-Specific Configuration for driver-specific paths)
 docs/
   specs/                  # Formal specifications (written before implementation)
   test-design.md          # Test strategy and test case definitions (Phase 2)
 ```
-
-## Hardware Targets
-
-- **Input (source)**: NI PXIe-4151 (PPS) or any nidcpower-compatible SMU in DC voltage source mode
-- **Output (sink)**: NI PXIe-4051 (electronic load) or any nidcpower-compatible SMU in DC current sink mode
 
 ## Plug-In Technical Setup
 
@@ -91,9 +116,8 @@ poetry --version
 ### 1. Create the plug-in directory and pyproject.toml
 
 Create the plug-in directory under `src/` and write `pyproject.toml` manually with
-`ni_measurement_plugin_sdk`, `nidcpower`, and any other required packages as dependencies.
-Use the reference example (`src/examples/meas-plugin/nidcpower_source_dc_voltage/pyproject.toml`)
-as a template.
+`ni_measurement_plugin_sdk`, the instrument driver package(s) listed in **Project-Specific Configuration**, and any other required packages as dependencies.
+Use the reference example in `src/examples/meas-plugin/` as a template.
 
 ### 2. Add Poetry-related files
 
@@ -177,17 +201,10 @@ Open `<measurement_name>.measui` in **Measurement Plug-In UI Editor**, then pres
 
 ### Simulation (no hardware required)
 
-Create a `.env` file in the plug-in directory with:
-
-```
-MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1
-MEASUREMENT_PLUGIN_NIDCPOWER_BOARD_TYPE=PXIe
-MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4141
-```
+Create a `.env` file in the plug-in directory using the environment variables listed in
+**Project-Specific Configuration**.
 
 ## Reference
 
 - NI Measurement Plug-Ins (Python): https://www.ni.com/docs/ja-JP/bundle/measurementplugins/page/python-measurements.html
-- Measurement Plug-In reference example (refer to the entire folder as needed): `src/examples/meas-plugin/nidcpower_source_dc_voltage/`
-- NI-DCPower driver examples (refer to the entire folder as needed): `src/examples/nidcpower/`
-- Electronic load example: `src/examples/nidcpower/nidcpower_sink_dc_current_into_electronic_load.py`
+- Driver-specific reference examples: see **Project-Specific Configuration**
