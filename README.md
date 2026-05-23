@@ -59,7 +59,7 @@ install.bat
 start.bat
 ```
 
-### 4. Run a measurement
+### 3. Run a measurement
 
 Open `PMICEfficiency.measui` in **Measurement Plug-In UI Editor** and press **Run**.
 
@@ -70,7 +70,7 @@ Create a `.env` file in `src/pmic_efficiency/` with the following content:
 ```
 MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1
 MEASUREMENT_PLUGIN_NIDCPOWER_BOARD_TYPE=PXIe
-MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4141
+MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4151
 ```
 
 Then start the service normally with `start.bat`.
@@ -84,8 +84,8 @@ src/
     meas-plugin/          # NI reference example (nidcpower_source_dc_voltage)
     nidcpower/            # Standalone nidcpower driver examples
 docs/
-  specs/                  # Formal test specifications
-  test-design.md          # Test strategy and test case definitions
+  specs/                  # Formal specifications and PMIC-specific test cases
+  test-design.md          # Four-layer test strategy (generic)
 ```
 
 ## Development
