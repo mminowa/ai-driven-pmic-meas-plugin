@@ -1,6 +1,6 @@
 # Updating the .measui File with Measurement Plug-In UI Creator
 
-This guide describes how to regenerate `PMICEfficiency.measui` using the
+This guide describes how to regenerate a `.measui` file using the
 [NI Measurement Plug-In UI Creator](https://github.com/ni/measurement-plugin-converter-python).
 Run this procedure whenever `measurement.py` configuration parameters or outputs change.
 
@@ -9,10 +9,24 @@ Run this procedure whenever `measurement.py` configuration parameters or outputs
 
 ---
 
+## Project-Specific Configuration
+
+> When reusing this guide for a new Measurement Plug-In project, update only this section.
+> Everything below applies to any plug-in built with the NI Measurement Plug-Ins framework.
+
+| Item | Value |
+|---|---|
+| Plug-in directory | `src\pmic_efficiency` |
+| Measurement service name | `PMICEfficiency` |
+| Generated `.measui` filename | `PMICEfficiency.measui` |
+| UI specification file | [`docs/specs/pmic_efficiency_ui.md`](specs/pmic_efficiency_ui.md) |
+
+---
+
 ## Prerequisites
 
 - Python 3.10+ installed and available on PATH
-- The `pmic_efficiency` plug-in dependencies already installed (`src/pmic_efficiency/.venv` exists)
+- The plug-in dependencies already installed (`.venv` exists inside the plug-in directory listed in **Project-Specific Configuration**)
 
 ---
 
@@ -93,10 +107,10 @@ All installations are complete.
 
 ## Step 5 — Start the measurement service (separate terminal)
 
-Open a **new terminal**, navigate to the plug-in directory, and start the gRPC service.
+Open a **new terminal**, navigate to the plug-in directory listed in **Project-Specific Configuration**, and start the gRPC service.
 
 ```bat
-cd src\pmic_efficiency
+cd <plugin_directory>
 start.bat
 ```
 
@@ -113,23 +127,24 @@ venv\Scripts\ni-measurement-plugin-ui-creator create
 ```
 
 The tool queries the running discovery service and lists available measurements.
-Select **PMICEfficiencyWithCopilot** when prompted.
+Select the measurement service name listed in **Project-Specific Configuration** when prompted.
 
 ```
 ? Select a measurement service: (Use arrow keys)
- > PMICEfficiencyWithCopilot
+ > <MeasurementServiceName>
 ```
 
-The tool generates `PMICEfficiencyWithCopilot.measui` in the current directory.
+The tool generates `<MeasurementServiceName>.measui` in the current directory.
 
 ---
 
 ## Step 7 — Copy the generated file into the plug-in directory
 
-Move the generated file into `src/pmic_efficiency/`, overwriting the existing one.
+Move the generated `.measui` file (see **Project-Specific Configuration** for the filename)
+into the plug-in directory, overwriting the existing one.
 
 ```powershell
-Move-Item -Force PMICEfficiencyWithCopilot.measui src\pmic_efficiency\PMICEfficiencyWithCopilot.measui
+Move-Item -Force <MeasurementServiceName>.measui <plugin_directory>\<MeasurementServiceName>.measui
 ```
 
 ---
@@ -148,8 +163,8 @@ outputs that do not need to be displayed.
 
 ## Step 9 — Adjust the layout to match the UI specification
 
-Rearrange and resize controls to match the layout defined in
-[`docs/specs/pmic_efficiency_ui.md`](specs/pmic_efficiency_ui.md).
+Rearrange and resize controls to match the layout defined in the UI specification file
+listed in **Project-Specific Configuration**.
 
 If you edit the `.measui` XML directly for precise positioning, refer to
 [`docs/measui-rules-unverified.md`](measui-rules-unverified.md) for attribute syntax
