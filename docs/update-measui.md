@@ -148,8 +148,12 @@ outputs that do not need to be displayed.
 
 ## Step 9 — Adjust the layout to match the UI specification
 
-Rearrange and resize controls to match the layout defined in the **UI Visualization** section of
-[`docs/specs/pmic_efficiency.md`](specs/pmic_efficiency.md).
+Rearrange and resize controls to match the layout defined in
+[`docs/specs/pmic_efficiency_ui.md`](specs/pmic_efficiency_ui.md).
+
+If you edit the `.measui` XML directly for precise positioning, refer to
+[`docs/measui-rules-unverified.md`](measui-rules-unverified.md) for attribute syntax
+(e.g. `[float]24` for positions, `[SMSolidColorBrush]#ffrrggbb` for colors).
 
 ---
 
