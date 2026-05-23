@@ -15,7 +15,7 @@ class TestCalculateEfficiency:
     """Tests for _calculate_efficiency(pout, pin) -> float.
 
     Spec ref: docs/specs/pmic_efficiency.md — Outputs: efficiency
-    Test design ref: docs/test-design.md — Layer 1, sections 1-1 and 1-2
+    Test design ref: docs/specs/pmic_efficiency_test_cases.md — Layer 1, sections 1-1 and 1-2
     """
 
     @pytest.mark.parametrize(
@@ -46,7 +46,7 @@ class TestCalculatePower:
     """Tests for _calculate_power(voltage, current) -> float.
 
     Spec ref: docs/specs/pmic_efficiency.md — Outputs: pin_measurements, pout_measurements
-    Test design ref: docs/test-design.md — Layer 1, section 1-3
+    Test design ref: docs/specs/pmic_efficiency_test_cases.md — Layer 1, section 1-3
     """
 
     @pytest.mark.parametrize(

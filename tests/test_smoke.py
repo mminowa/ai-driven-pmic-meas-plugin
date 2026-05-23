@@ -3,7 +3,7 @@
 No hardware or running service required.
 These tests will fail until Phase 3 creates the plug-in directory and files.
 
-Test design ref: docs/test-design.md — Layer 3, sections 3-1 through 3-3
+Test design ref: docs/specs/pmic_efficiency_test_cases.md — Layer 3, sections 3-1 through 3-3
 """
 
 import json

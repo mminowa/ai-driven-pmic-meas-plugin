@@ -71,7 +71,7 @@ def load_session():
 
 # ---------------------------------------------------------------------------
 # 2-1. Power on the DUT
-# Test design ref: docs/test-design.md — Layer 2, section 2-1
+# Test design ref: docs/specs/pmic_efficiency_test_cases.md — Layer 2, section 2-1
 # ---------------------------------------------------------------------------
 
 
@@ -88,7 +88,7 @@ class TestRunPowerOn:
 
 # ---------------------------------------------------------------------------
 # 2-2 to 2-6. Perform Measurement
-# Test design ref: docs/test-design.md — Layer 2, sections 2-2 through 2-6
+# Test design ref: docs/specs/pmic_efficiency_test_cases.md — Layer 2, sections 2-2 through 2-6
 # ---------------------------------------------------------------------------
 
 
@@ -199,7 +199,7 @@ class TestRunMeasurement:
 
 # ---------------------------------------------------------------------------
 # 2-5. Power off the DUT
-# Test design ref: docs/test-design.md — Layer 2, section 2-5
+# Test design ref: docs/specs/pmic_efficiency_test_cases.md — Layer 2, section 2-5
 # ---------------------------------------------------------------------------
 
 
