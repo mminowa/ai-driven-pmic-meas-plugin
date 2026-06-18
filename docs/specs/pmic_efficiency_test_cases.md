@@ -17,7 +17,7 @@ _SOURCE_OPTIONS = {"simulate": True, "driver_setup": {"Model": "4151", "BoardTyp
 _LOAD_OPTIONS   = {"simulate": True, "driver_setup": {"Model": "4051", "BoardType": "PXIe"}}
 ```
 
-**Orchestration functions** (`measure()` dispatches to these):
+**Orchestration functions** (`measure()` dispatches to the mode handlers; the calculation functions are pure helpers called within them):
 
 | Function | Responsibility | Testable without framework? |
 |---|---|---|
