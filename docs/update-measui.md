@@ -166,9 +166,16 @@ outputs that do not need to be displayed.
 Rearrange and resize controls to match the layout defined in the UI specification file
 listed in **Project-Specific Configuration**.
 
-If you edit the `.measui` XML directly for precise positioning, refer to
-[`docs/measui-rules-unverified.md`](measui-rules-unverified.md) for attribute syntax
-(e.g. `[float]24` for positions, `[SMSolidColorBrush]#ffrrggbb` for colors).
+If you edit the `.measui` XML directly:
+
+- The **authoritative source** for the control to use and its concrete XML is the verified
+  samples — run the `find-meas-example` skill
+  (`.claude/skills/find-meas-example/find_example.sh <term>`) and copy from the real file.
+- For the **grammar** (typed-attribute syntax like `[float]24` / `[SMSolidColorBrush]#ffrrggbb`,
+  namespaces, channel binding, ID format), see [`docs/measui-reference.md`](measui-reference.md).
+- For **constructs that break the parser** (which samples cannot teach), see
+  [`docs/measui-gotchas.md`](measui-gotchas.md), then lint the result with
+  `python scripts/validate_measui.py <file.measui>`.
 
 ---
 
