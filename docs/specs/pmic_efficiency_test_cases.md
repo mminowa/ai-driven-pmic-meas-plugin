@@ -69,17 +69,20 @@ _LOAD_OPTIONS   = {"simulate": True, "driver_setup": {"Model": "4051", "BoardTyp
 
 ### 2-2. Perform Measurement — output shapes
 
-Given `vin_levels=[3.3, 5.0]` and `iout_levels=[0.5, 1.0, 1.5]`:
+Given `vin_levels=[3.3, 5.0]` and `iout_levels=[0.5, 1.0, 1.5]` (so `N_vin=2`, `N_iout=3`):
 
-- All 2D output arrays have shape `[2, 3]`.
-- `vin_setpoints` has length 2.
-- `iout_setpoints` has length 3.
+- All 1D measurement arrays have length `N_vin × N_iout = 6`, in row-major order
+  (all Iout values for `vin_levels[0]`, then all for `vin_levels[1]`).
+- `vin_setpoints` has length `N_vin` (2).
+- `iout_setpoints` has length `N_iout` (3).
+- `efficiency` (`DoubleXYData[]`) has length `N_vin` (2); each element holds `N_iout` (3) points.
 - `output_enabled` is `False` after the call.
 
 ### 2-3. Perform Measurement — NaN handling
 
-With simulated instruments, if `pin_measurements[i, j] ≤ 0`, then
-`efficiency[i, j]` must be `NaN`, not `inf` or an exception.
+With simulated instruments, for the element at Vin index `i` and Iout index `j`
+(flat row-major index `k = i * N_iout + j`): if `pin_measurements[k] ≤ 0`, then
+`efficiency_measurements[k]` must be `NaN`, not `inf` or an exception.
 
 ### 2-4. Perform Measurement — sweep order
 
@@ -133,7 +136,7 @@ All of the following files exist in the plug-in directory:
 
 ### Perform Measurement mode
 
-- [ ] All 2D output arrays are populated.
+- [ ] All 1D measurement arrays are populated.
 - [ ] XY Graph displays one efficiency curve per `vin_levels` entry.
 - [ ] Each curve uses a distinct color.
 - [ ] X-axis shows output current (A); Y-axis shows efficiency (%).
