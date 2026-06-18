@@ -40,19 +40,29 @@ This repository contains an NI Measurement Plug-In implemented with the NI Measu
 
 ## Development Approach
 
-This project follows **Specification-Driven Development**. All work proceeds in three phases in order:
+This project follows **Specification-Driven Development**. All work proceeds in three phases in order.
+
+> These phases are automated by Claude Code slash commands (see `.claude/` and the
+> Automation section in [README.md](README.md)). The commands delegate to the procedure
+> documented here — this file remains the source of truth.
 
 ### Phase 1 — Specification
 
 Write a formal spec in `docs/specs/` covering inputs, outputs, instrument configuration, test flow, and any constraints. Do not create any source files until the spec is complete and agreed upon.
 
+> Automation: run `/spec <name>` (or `/new-plugin <name>` first to repurpose this template for a new measurement).
+
 ### Phase 2 — Test Definition
 
 Define how the specification will be verified: expected value ranges, edge cases, and what constitutes correct behavior. Tests are written before production code.
 
+> Automation: run `/test-cases <name>`.
+
 ### Phase 3 — Implementation
 
 Set up the plug-in project, write `measurement.py` to satisfy the spec, and verify against the tests. See **Plug-In Technical Setup** below for the step-by-step procedure.
+
+> Automation: run `/implement <name> <MeasurementName>`.
 
 > Do not implement anything not covered by a written specification in `docs/specs/`.
 

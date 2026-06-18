@@ -86,11 +86,30 @@ src/
 docs/
   specs/                  # Formal specifications and PMIC-specific test cases
   test-design.md          # Four-layer test strategy (generic)
+scripts/                  # Helper scripts (e.g. validate_measui.py)
+.claude/                  # Claude Code automation: commands/, skills/, agents/
 ```
 
 ## Development
 
 This project uses **Specification-Driven Development**. See [CLAUDE.md](CLAUDE.md) for the full development process and contribution guidelines.
+
+### Automation (Claude Code)
+
+If you work on this repo with [Claude Code](https://claude.com/claude-code), the three SDD
+phases are automated by slash commands, run in order:
+
+`/new-plugin <name>` → `/spec <name>` → `/test-cases <name>` → `/implement <name> <MeasurementName>`
+
+Supporting tools (Claude invokes the skills and agent automatically when relevant):
+
+- **Skills** — `find-meas-example` (find the verified sample for a `DataType` / `.measui`
+  control) and `measurement-plugin-sdk` (`measurement.py` conventions).
+- **Agent** — `spec-reviewer` reviews a draft spec against the project rules.
+- **Script** — `python scripts/validate_measui.py <file.measui>` lints a `.measui` against
+  known parser gotchas.
+
+Each command, skill, and agent is self-documenting; see the files under `.claude/` for usage.
 
 ## License
 
