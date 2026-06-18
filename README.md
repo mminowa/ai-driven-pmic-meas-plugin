@@ -81,7 +81,7 @@ Then start the service normally with `start.bat`.
 src/
   pmic_efficiency/        # PMIC efficiency measurement plug-in
   examples/
-    meas-plugin/          # NI reference example (nidcpower_source_dc_voltage)
+    meas-plugin/          # NI Measurement Plug-In reference examples (multiple drivers)
     nidcpower/            # Standalone nidcpower driver examples
 docs/
   specs/                  # Formal specifications and PMIC-specific test cases

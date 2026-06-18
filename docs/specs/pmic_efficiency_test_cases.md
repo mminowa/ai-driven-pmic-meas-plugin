@@ -21,6 +21,7 @@ _LOAD_OPTIONS   = {"simulate": True, "driver_setup": {"Model": "4051", "BoardTyp
 
 | Function | Responsibility | Testable without framework? |
 |---|---|---|
+| `_calculate_power(voltage, current)` | Compute power (V × I) | Yes — unit test |
 | `_calculate_efficiency(pout, pin)` | Compute η or NaN | Yes — unit test |
 | `_run_power_on(source_session, load_session, ...)` | Enable outputs | Yes — with nidcpower simulation |
 | `_run_measurement(source_session, load_session, ...)` | Sweep and measure | Yes — with nidcpower simulation |
