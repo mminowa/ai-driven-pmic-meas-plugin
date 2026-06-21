@@ -99,7 +99,10 @@ This project uses **Specification-Driven Development**. See [CLAUDE.md](CLAUDE.m
 If you work on this repo with [Claude Code](https://claude.com/claude-code), the three SDD
 phases are automated by slash commands, run in order:
 
-`/new-plugin <name>` → `/spec <name>` → `/test-cases <name>` → `/implement <name> <MeasurementName>`
+`/new-plugin <name>` → `/spec <name>` → `/test-cases <name>` → `/scaffold <name> <MeasurementName>` → `/implement <name>` → `/gen-measui <name>` → `/refine-measui <name>`
+
+Phase 3 (Implementation) is split into four commands — `/scaffold`, `/implement`,
+`/gen-measui`, `/refine-measui` — so each runs with a small, focused context.
 
 Supporting tools (Claude invokes the skills and agent automatically when relevant):
 

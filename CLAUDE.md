@@ -62,7 +62,9 @@ Define how the specification will be verified: expected value ranges, edge cases
 
 Set up the plug-in project, write `measurement.py` to satisfy the spec, and verify against the tests. See **Plug-In Technical Setup** below for the step-by-step procedure.
 
-> Automation: run `/implement <name> <MeasurementName>`.
+> Automation: Phase 3 is split into four commands run in order —
+> `/scaffold <name> <MeasurementName>` → `/implement <name>` → `/gen-measui <name>` →
+> `/refine-measui <name>`.
 
 > Do not implement anything not covered by a written specification in `docs/specs/`.
 
@@ -188,16 +190,18 @@ Move all generated files up into the plug-in directory and remove the now-empty 
 mv <MeasurementName>/* . && rmdir <MeasurementName>
 ```
 
-### 5. Modify the generated files
+### 5. Implement `measurement.py`
 
 Edit `measurement.py` to implement the measurement logic: configuration parameters,
 output definitions, and the `measure()` function. Update `.serviceconfig` as needed.
 
-To update `.measui`, follow the procedure in
-[`docs/update-measui.md`](docs/update-measui.md). Re-run that procedure whenever
-`measurement.py` configuration parameters or outputs change.
+### 6. Build the UI (`.measui`)
 
-### 6. Run the measurement service
+To create or update `.measui`, follow the procedure in
+[`docs/update-measui.md`](docs/update-measui.md). Re-run that procedure whenever
+the `measurement.py` configuration parameters or outputs change in Step 5.
+
+### 7. Run the measurement service
 
 On Windows, run the generated batch file to start the gRPC service:
 
@@ -205,7 +209,7 @@ On Windows, run the generated batch file to start the gRPC service:
 start.bat
 ```
 
-### 7. Execute the measurement
+### 8. Execute the measurement
 
 Open `<measurement_name>.measui` in **Measurement Plug-In UI Editor**, then press the **Run** button.
 

@@ -1,62 +1,59 @@
 ---
 name: measurement-plugin-sdk
-description: Conventions for writing measurement.py with the NI Measurement Plug-In SDK (ni_measurement_plugin_sdk). Use when creating or editing a measurement.py — the @register_measurement / @configuration / @output decorators, pin reservation and session init, streaming with yield, enum/IOResource parameters, and the framework-separation pattern that keeps logic testable. Pairs with the find-meas-example skill (which finds the right DataType/UI control).
+description: SDK-specific patterns for measurement.py that are hard to find in the reference examples. Covers DataType selection, streaming with yield (when the spec requires real-time output), and simulation via the framework. Use alongside the Driver-specific reference examples in CLAUDE.md.
 ---
 
 # measurement-plugin-sdk
 
-How to structure `measurement.py`. This skill carries the *conventions*; the **verified
-examples are the source of truth for exact code** — use the `find-meas-example` skill and
-copy from the real sample. Do not author decorator stacks or session blocks from memory.
+SDK patterns that are easy to get wrong or hard to find in the reference examples.
+Read the Driver-specific reference examples in @CLAUDE.md for all other boilerplate.
 
-## When to use
+## DataType reference
 
-Creating or editing `measurement.py`, or wiring up configuration/output parameters, pins,
-sessions, or streaming.
+For the full `DataType` enum and decorator signatures, locate the SDK source files with:
 
-## Core conventions (confirmed across the samples under `src/examples/meas-plugin/`)
+```bash
+python -c "
+import ni_measurement_plugin_sdk_service.measurement.info as i
+import ni_measurement_plugin_sdk_service.measurement.service as s
+print(i.__file__)
+print(s.__file__)
+"
+```
 
-1. **Decorator stack** on `measure()` — order matters; copy the shape from a sample:
-   ```python
-   @measurement_service.register_measurement
-   @measurement_service.configuration("pin_names", nims.DataType.IOResource, "Pin1",
-       instrument_type=nims.session_management.INSTRUMENT_TYPE_NI_DCPOWER)
-   @measurement_service.configuration("voltage_level", nims.DataType.Double, 6.0)
-   @measurement_service.output("voltage_measurements", nims.DataType.DoubleArray1D)
-   def measure(pin_names, voltage_level): ...
-   ```
-   - The DisplayName string in each decorator must match the `.measui` `Channel` binding
-     exactly (see `docs/measui-reference.md` §3).
-   - For a DataType you have not used yet, run
-     `.claude/skills/find-meas-example/find_example.sh <DataType>` first.
+Then read the two files:
+- `info.py` — all `DataType` enum values
+- `service.py` — `configuration()` and `output()` decorator signatures
 
-2. **Enum / IOResource parameters:** `DataType.Enum` takes `enum_type=<IntEnum>`;
-   `DataType.IOResource` takes `instrument_type=...`. See examples via the find-meas-example
-   skill.
+Non-obvious rules not visible from the enum alone:
 
-3. **Pins and sessions — never hardcode resource names.** Reserve by pin name and let the
-   session-management service resolve hardware from the pin map:
-   ```python
-   with measurement_service.context.reserve_sessions(pin_names) as reservation:
-       with reservation.initialize_nidcpower_sessions() as session_infos:
-           ...
-   ```
+- `DataType.Pin` / `DataType.PinArray1D` are **deprecated** — use `IOResource` / `IOResourceArray1D` instead.
+- `DoubleXYData`, `Double2DArray`, `String2DArray`, `DoubleXYDataArray1D` are **output only** — passing them to `configuration()` raises `ValueError`.
+- `IOResource` / `IOResourceArray1D` should include `instrument_type=` (a constant from `ni_measurement_plugin_sdk_service.session_management`, e.g. `INSTRUMENT_TYPE_NI_DCPOWER`). Omitting it does not raise an error but disables instrument-type filtering in the pin map.
+- `Enum` / `EnumArray1D` require `enum_type=` — a Python `enum.Enum` subclass (or protobuf enum) where at least one member has value `0`. Omitting `enum_type` raises `ValueError`.
 
-4. **Streaming:** `yield` partial results to update the UI in real time; the function is a
-   generator when it streams. Yield a complete tuple of all outputs each time.
+## Streaming with `yield` (only when the spec requires real-time output)
 
-5. **Framework-separation for testability (required by @docs/test-design.md):** `measure()`
-   is a thin orchestrator. Put logic in:
-   - pure calculation functions (no instrument/framework calls) → Layer 1 unit tests,
-   - mode/handler functions taking session objects → Layer 2 tests with the simulated driver,
-   - `measure()` only reserves sessions and dispatches.
-   Use the exact function names listed in the project's `docs/specs/<name>_test_cases.md`.
+Most measurements use `return`. Use `yield` only when the spec explicitly requires
+real-time streaming of partial results to the UI during the measurement loop.
 
-6. **Simulation must work without hardware** — honor the simulation env vars from @CLAUDE.md
-   (a `.env` in the plug-in directory). All code must run with simulated instruments.
+When streaming is required:
+- `measure()` becomes a generator — use `yield`, never `return`.
+- Yield a complete tuple of **all** outputs each time (partial arrays mid-loop, then
+  completed arrays at the end).
+- If a mode handler is also a generator, delegate with `yield from _run_handler(...)`.
 
-## Reference
+The only reference example showing this pattern is
+`src/examples/meas-plugin/game_of_life/measurement.py`.
 
-- Exact code patterns: the `find-meas-example` skill + the samples it points to.
-- Testability decomposition and the four test layers: @docs/test-design.md.
-- Project rules (no hardcoded resources, simulation support, English only): @CLAUDE.md.
+## Simulation via the framework — not via `nidcpower.Session(options=…)`
+
+The standalone driver examples pass `options={'simulate': True, ...}` directly to
+`nidcpower.Session`. Do **not** do this in `measurement.py`. The framework injects simulation
+settings from the `.env` file automatically when `initialize_nidcpower_sessions()` is called.
+`measurement.py` requires no change to run in simulation vs. real hardware.
+
+**Layer 2 integration tests are exempt from this rule.** Integration tests call helper
+functions directly with sessions they create themselves, bypassing the framework. Passing
+`options={'simulate': True, ...}` directly to the driver session constructor is correct
+and expected in test code.

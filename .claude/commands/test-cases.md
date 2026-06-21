@@ -36,6 +36,8 @@ implementation. Phase 2 produces the test-cases document only.
    - **Layer 3** smoke cases: import, `.serviceconfig` JSON fields, required-files list.
    - **Layer 4** manual end-to-end checklist (per mode).
 
-4. **Confirm with the user** and state that Phase 3 (`/implement $1`) is next.
+4. **Confirm with the user** and state that Phase 3 is next, starting with
+   `/scaffold $1 <MeasurementName>` (then `/implement $1` → `/gen-measui $1` →
+   `/refine-measui $1`).
 
 Keep all documentation in **English**.
