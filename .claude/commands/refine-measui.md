@@ -25,24 +25,69 @@ is already done, or note any control the spec requires that is missing.
 - The procedure: @docs/update-measui.md, **Step 9**.
 - The target layout: the UI specification file `docs/specs/$1_ui.md` (see also the
   **Project-Specific Configuration** table in @docs/update-measui.md).
-- Authoritative control + concrete XML per data type: the **find-meas-example** skill
-  (`.claude/skills/find-meas-example/find_example.sh <DataType-or-control>`) — copy from the
-  real verified sample it points to.
-- Attribute grammar (typed attributes, namespaces, channel binding, ID format):
-  @docs/measui-reference.md.
-- Constructs that break the parser: @docs/measui-gotchas.md.
+
+## .measui XML Quick Reference
+
+Use this section directly — do **not** read `measurement.py` to resolve these.
+
+**Channel names** are always the snake_case Python parameter name from
+`@measurement_service.configuration` / `@measurement_service.output`.
+The human-readable label shown in the UI comes from the UI spec, not the channel name.
+
+**Axis label (visible):**
+```xml
+Label="[string]My Label" LabelVisibility="[SMVisibility]Visible"
+```
+
+**Fixed Y-axis range** (no auto-scaling):
+```xml
+Adjuster="[RangeAdjuster]None" Range="[IRange]0, 105, System.Double"
+```
+
+**Auto-fit axis** (scales to data):
+```xml
+Adjuster="[RangeAdjuster]FitExactly"
+```
+
+**Color format — ARGB, fully opaque prefix `ff`:**
+```xml
+LineStroke="[SMSolidColorBrush]#ffff3030"
+PointFill="[SMSolidColorBrush]#ffff3030"
+```
+
+**Plot line thickness:**
+```xml
+LineThickness="[double]2"
+```
+
+**Standard control heights (px):**
+
+| Control type | Height |
+|---|---|
+| Label | 15 |
+| ChannelNumericText | 25 |
+| ChannelEnumSelector | 24 |
+| ChannelPinSelector | 25 |
+| ChannelLED | 35 |
+| ChannelArrayViewer (3 visible rows) | 95 |
+
+**Vertical stacking pattern** inside a pane:
+
+```
+Label      at Top = Y            (Height 15)
+Control    at Top = Y + 18       (Height per table above)
+Next label at Top = Y + 18 + control_height + 5
+```
+
+**Checksum**: the `Checksum` attribute in `<SourceFile>` is stale after any manual XML edit.
+The Measurement Plug-In UI Editor regenerates it on first save — leave the old value in place.
 
 ## Steps
 
 Follow @docs/update-measui.md, **Step 9**:
 
 1. Compare the current `.measui` controls against `docs/specs/$1_ui.md`.
-2. For each control, get the correct element/XML by running the **find-meas-example** skill and
-   copying from the verified sample; consult @docs/measui-reference.md for grammar and
-   @docs/measui-gotchas.md for parser-breaking constructs.
-3. Rearrange and resize controls to match the layout in the UI specification.
-4. Lint the result: `python scripts/validate_measui.py src/$1/<ServiceName>.measui`. Fix until
-   it passes.
+2. Rearrange and resize controls to match the layout in the UI specification.
 
 ## Finish
 
