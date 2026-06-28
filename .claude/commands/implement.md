@@ -41,9 +41,10 @@ Then apply:
    handlers, thin `measure()` that dispatches). Resource names come from the pin map /
    configuration — never hardcode them. Define the `.pinmap` per the spec.
 
-2. **Write the tests** under `src/$1/tests/` matching the layers in @docs/test-design.md:
-   `test_calculations.py` (Layer 1), `test_measurement.py` (Layer 2, simulated driver),
-   `test_smoke.py` (Layer 3). Implement every Layer 1–3 case from the test-cases document.
+2. **Write the tests** under `tests/$1/` matching the layers in @docs/test-design.md:
+   `conftest.py` (sys.path setup and `PLUGIN_DIR`), `test_calculations.py` (Layer 1),
+   `test_measurement.py` (Layer 2, simulated driver), `test_smoke.py` (Layer 3). Implement
+   every Layer 1–3 case from the test-cases document.
 
 3. **Verify.** Run `poetry run pytest` for Layers 1–3 and report results honestly (show
    failures with their output). Fix until green. Layer 4 requires Windows + the running
