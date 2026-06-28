@@ -17,16 +17,17 @@ source. If the target spec is missing, say so and stop.
 
 ## What to check
 
-1. **Completeness vs. the template.** The measurement spec should cover: Purpose, Instrument
-   Configuration, Pin Map, Inputs (name/type/default/unit/description), Outputs
-   (type/shape/unit), Sweep/Test Flow, and Constraints. Flag any missing or thin section.
+1. **Completeness vs. the template.** The measurement spec should cover: Plugin Configuration,
+   Purpose, Instrument Configuration, Pin Map, Inputs (name/type/default/unit/description),
+   Outputs (type/shape/unit), Sweep Structure, Test Flow, UI Visualization (cross-reference to
+   `_ui.md`), and Assumptions and Constraints. Flag any missing or thin section.
 2. **Repository Rules (from CLAUDE.md).**
    - No hardcoded resource names — instrument resources must come from a pin map / config.
    - No confidential data (credentials, internal hostnames, proprietary circuit parameters,
      customer/product-specific values).
    - Simulation must be supported (sim env vars / driver simulation referenced).
 3. **Constraints (from CLAUDE.md).** Uses `ni_measurement_plugin_sdk`; uses the driver(s)
-   named in Project-Specific Configuration; Python 3.10+; documentation in English.
+   named in the spec's Plugin Configuration section; Python 3.10+; documentation in English.
 4. **Internal consistency.** Inputs/outputs referenced in the test flow are defined; units and
    types are coherent; output array shapes match the described sweep; modes (if any) are all
    covered by the flow.
