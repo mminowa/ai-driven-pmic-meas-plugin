@@ -4,8 +4,8 @@ This document describes the four-layer testing strategy for NI Measurement Plug-
 following the Specification-Driven Development process. Tests are defined before implementation
 begins. Implementation must satisfy these test definitions.
 
-For this project's test cases, see
-[docs/specs/pmic_efficiency_test_cases.md](specs/pmic_efficiency_test_cases.md).
+Each plugin's test cases are defined in `docs/specs/<plugin_name>_test_cases.md`.
+For example: [docs/specs/pmic_efficiency_test_cases.md](specs/pmic_efficiency_test_cases.md).
 
 ---
 
@@ -87,7 +87,8 @@ See the test cases document for the list of required files for this project.
 ### Layer 4 — Manual End-to-End Checklist
 
 These tests require NI InstrumentStudio and the measurement service running via `start.bat`.
-Run with simulated instruments using a `.env` file (see [CLAUDE.md](../CLAUDE.md)).
+Run with simulated instruments using a `.env` file (see `docs/specs/<plugin_name>.md` →
+Plugin Configuration for the required environment variables).
 
 #### Service startup
 

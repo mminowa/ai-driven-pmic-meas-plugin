@@ -1,5 +1,29 @@
 # PMIC Efficiency Test Specification
 
+## Plugin Configuration
+
+| Item | Value |
+|---|---|
+| Directory | `src/pmic_efficiency/` |
+| Measurement service name | `PMICEfficiency` |
+| Instrument driver | `nidcpower` |
+
+**Simulation environment variables** (create a `.env` file in the plug-in directory):
+
+```
+MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1
+MEASUREMENT_PLUGIN_NIDCPOWER_BOARD_TYPE=PXIe
+MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4151
+```
+
+**Reference examples:**
+
+- Measurement Plug-In example: `src/examples/meas-plugin/nidcpower_source_dc_voltage/`
+- Standalone driver examples: `src/examples/nidcpower/`
+- Electronic load example: `src/examples/nidcpower/nidcpower_sink_dc_current_into_electronic_load.py`
+
+---
+
 ## Purpose
 
 Characterize the power conversion efficiency of a PMIC (Power Management IC) by sweeping both the input voltage (Vin) and the output load current (Iout). For each combination of Vin and Iout, the plug-in measures input and output voltage and current, calculates input power, output power, and conversion efficiency.
@@ -215,4 +239,4 @@ See [pmic_efficiency_ui.md](pmic_efficiency_ui.md) for the full UI layout, graph
 - `source_initial_voltage` must be a voltage the instrument can physically output (e.g., PXIe-4151 cannot output 0 V).
 - `Pin` must be greater than zero for a valid efficiency result; if `Pin ≤ 0`, `efficiency` at that point is `NaN`.
 - The plug-in does not manage PMIC power sequencing beyond the three modes described above; it assumes the DUT reaches steady state within `source_delay`.
-- Simulation is supported via `MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1` (see [CLAUDE.md](../../CLAUDE.md)).
+- Simulation is supported via `MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1` (see **Plugin Configuration** above).
