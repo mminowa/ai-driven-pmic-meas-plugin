@@ -24,7 +24,7 @@ is already done, or note any control the spec requires that is missing.
 
 - The procedure: docs/update-measui.md, **Step 9**.
 - The target layout: the UI specification file `docs/specs/$1_ui.md` (see also the
-  **Project-Specific Configuration** table in docs/update-measui.md).
+  **Plugin-Specific Values** section in docs/update-measui.md).
 - XML grammar, channel binding, ID format, control heights, layout patterns:
   the **measui-reference** skill.
 - Parser-breaking constructs to avoid: the **measui-gotchas** skill.
