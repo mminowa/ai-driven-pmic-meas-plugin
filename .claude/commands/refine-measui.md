@@ -8,7 +8,7 @@ Specification-Driven Development process in @CLAUDE.md. Short name: **$1**.
 
 Phase 3 is split into four commands run in order:
 `/scaffold` → `/implement` → `/gen-measui` → `/refine-measui`. This command covers
-@docs/update-measui.md **Step 9**: adjust and lay out the controls in `src/$1/<ServiceName>.measui`
+docs/update-measui.md **Step 9**: adjust and lay out the controls in `src/$1/<ServiceName>.measui`
 to match the UI specification, editing the XML directly.
 
 ## Hard rule
@@ -22,72 +22,20 @@ is already done, or note any control the spec requires that is missing.
 
 ## Reference
 
-- The procedure: @docs/update-measui.md, **Step 9**.
+- The procedure: docs/update-measui.md, **Step 9**.
 - The target layout: the UI specification file `docs/specs/$1_ui.md` (see also the
-  **Project-Specific Configuration** table in @docs/update-measui.md).
-
-## .measui XML Quick Reference
-
-Use this section directly — do **not** read `measurement.py` to resolve these.
-
-**Channel names** are always the snake_case Python parameter name from
-`@measurement_service.configuration` / `@measurement_service.output`.
-The human-readable label shown in the UI comes from the UI spec, not the channel name.
-
-**Axis label (visible):**
-```xml
-Label="[string]My Label" LabelVisibility="[SMVisibility]Visible"
-```
-
-**Fixed Y-axis range** (no auto-scaling):
-```xml
-Adjuster="[RangeAdjuster]None" Range="[IRange]0, 105, System.Double"
-```
-
-**Auto-fit axis** (scales to data):
-```xml
-Adjuster="[RangeAdjuster]FitExactly"
-```
-
-**Color format — ARGB, fully opaque prefix `ff`:**
-```xml
-LineStroke="[SMSolidColorBrush]#ffff3030"
-PointFill="[SMSolidColorBrush]#ffff3030"
-```
-
-**Plot line thickness:**
-```xml
-LineThickness="[double]2"
-```
-
-**Standard control heights (px):**
-
-| Control type | Height |
-|---|---|
-| Label | 15 |
-| ChannelNumericText | 25 |
-| ChannelEnumSelector | 24 |
-| ChannelPinSelector | 25 |
-| ChannelLED | 35 |
-| ChannelArrayViewer (3 visible rows) | 95 |
-
-**Vertical stacking pattern** inside a pane:
-
-```
-Label      at Top = Y            (Height 15)
-Control    at Top = Y + 18       (Height per table above)
-Next label at Top = Y + 18 + control_height + 5
-```
-
-**Checksum**: the `Checksum` attribute in `<SourceFile>` is stale after any manual XML edit.
-The Measurement Plug-In UI Editor regenerates it on first save — leave the old value in place.
+  **Project-Specific Configuration** table in docs/update-measui.md).
+- XML grammar, channel binding, ID format, control heights, layout patterns:
+  the **measui-reference** skill.
+- Parser-breaking constructs to avoid: the **measui-gotchas** skill.
 
 ## Steps
 
-Follow @docs/update-measui.md, **Step 9**:
+Follow docs/update-measui.md, **Step 9** (rearrange/resize controls to match the UI spec):
 
-1. Compare the current `.measui` controls against `docs/specs/$1_ui.md`.
-2. Rearrange and resize controls to match the layout in the UI specification.
+1. Read `src/$1/*.measui` and `docs/specs/$1_ui.md`.
+2. Edit the .measui XML so controls match the layout.
+3. Run `.claude/skills/measui-gotchas/validate_measui.py src/$1/<ServiceName>.measui` and fix any findings.
 
 ## Finish
 
