@@ -29,7 +29,7 @@ This project follows **Specification-Driven Development**. All work proceeds in 
 
 Write a formal spec in `docs/specs/` covering inputs, outputs, instrument configuration, test flow, and any constraints. Do not create any source files until the spec is complete and agreed upon.
 
-> Automation: run `/spec <name>` (or `/new-plugin <name>` first to repurpose this template for a new measurement).
+> Automation: run `/spec <name>`.
 
 ### Phase 2 — Test Definition
 

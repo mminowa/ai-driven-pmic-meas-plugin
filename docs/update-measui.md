@@ -164,7 +164,7 @@ outputs that do not need to be displayed.
 ## Step 9 — Adjust the layout to match the UI specification
 
 Rearrange and resize controls to match the layout defined in the UI specification file
-listed in **Project-Specific Configuration**.
+listed in **Plugin-Specific Values**.
 
 
 ---

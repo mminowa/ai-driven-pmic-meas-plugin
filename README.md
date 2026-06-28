@@ -99,18 +99,20 @@ This project uses **Specification-Driven Development**. See [CLAUDE.md](CLAUDE.m
 If you work on this repo with [Claude Code](https://claude.com/claude-code), the three SDD
 phases are automated by slash commands, run in order:
 
-`/new-plugin <name>` → `/spec <name>` → `/test-cases <name>` → `/scaffold <name> <MeasurementName>` → `/implement <name>` → `/gen-measui <name>` → `/refine-measui <name>`
+`/spec <name>` → `/test-cases <name>` → `/scaffold <name> <MeasurementName>` → `/implement <name>` → `/gen-measui <name>` → `/refine-measui <name>`
 
 Phase 3 (Implementation) is split into four commands — `/scaffold`, `/implement`,
 `/gen-measui`, `/refine-measui` — so each runs with a small, focused context.
 
 Supporting tools (Claude invokes the skills and agent automatically when relevant):
 
-- **Skills** — `find-meas-example` (find the verified sample for a `DataType` / `.measui`
-  control) and `measurement-plugin-sdk` (`measurement.py` conventions).
+- **Skills**
+  - `find-meas-example` — find the verified sample for a given `DataType` / `.measui` control
+  - `measurement-plugin-sdk` — `measurement.py` patterns and conventions
+  - `measui-reference` — `.measui` grammar reference (namespaces, typed attributes, layout)
+  - `measui-gotchas` — known `.measui` parser failures to avoid
+  - `nidcpower-patterns` — nidcpower driver patterns that differ from standalone examples
 - **Agent** — `spec-reviewer` reviews a draft spec against the project rules.
-- **Script** — `python scripts/validate_measui.py <file.measui>` lints a `.measui` against
-  known parser gotchas.
 
 Each command, skill, and agent is self-documenting; see the files under `.claude/` for usage.
 
