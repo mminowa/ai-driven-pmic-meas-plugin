@@ -161,6 +161,34 @@ independently.
 
 ---
 
+## Identifying which session_info belongs to which pin
+
+When `reserve_sessions([pin_a, pin_b])` is called with separate-session instruments,
+`initialize_nidcpower_sessions()` returns a list of two session_info objects in
+unspecified order. Use `channel_mappings` to find the right one for each pin:
+
+```python
+def _find_session_info(session_infos, pin_name: str):
+    for info in session_infos:
+        for mapping in info.channel_mappings:
+            if mapping.pin_or_relay_name == pin_name:
+                return info
+    raise ValueError(f"No session found for pin '{pin_name}'")
+
+with reservation.initialize_nidcpower_sessions() as session_infos:
+    source_info = _find_session_info(session_infos, source_pin)
+    load_info   = _find_session_info(session_infos, load_pin)
+    source_ch = source_info.session.channels[source_info.channel_list]
+    load_ch   = load_info.session.channels[load_info.channel_list]
+```
+
+If `source_pin` and `load_pin` happen to share a ChannelGroup (same session),
+`_find_session_info` returns the same object for both. In that case, `channel_list`
+covers both pins — extract per-pin channels from `channel_mappings` instead of
+using `channel_list` directly. See "Same-session: initiate once" above.
+
+---
+
 ## `Sense` enum — driver values vs. SDK configuration enum
 
 `nidcpower.Sense` uses **hardware-level integer codes**, not 0-based integers:

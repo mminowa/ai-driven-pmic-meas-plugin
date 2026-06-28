@@ -147,14 +147,51 @@ def _run_measurement(..., cancellation_event: threading.Event):
     return results
 ```
 
-For generator handlers (streaming with `yield`), the same ExitStack pattern applies.
-Replace `results.append(...)` with `yield (True, ...)` inside the `with` block, and
-`return results` with `yield (False, ...)` after it. See the streaming section above
-for when to use `yield`.
+For generator handlers (streaming with `yield`), the same ExitStack pattern applies,
+with one critical placement rule:
 
-On cancellation: ExitStack unwinds (`reset()` then `abort()` as no-op on the
-now-Uncommitted sessions), then the exception propagates out of the handler.
-On normal completion: ExitStack exits cleanly the same way, then the handler returns normally.
+> **Intermediate yields go inside the `with ExitStack()` block (outputs active).
+> The final yield goes outside it, after `reset()` has already run.**
+
+```python
+def _run_measurement(..., cancellation_event: threading.Event):
+    # Accumulate results across the sweep
+    vin_meas_list, eff_meas_list = [], []
+
+    with ExitStack() as stack:
+        stack.enter_context(source_ch.initiate())
+        stack.enter_context(load_ch.initiate())
+        stack.callback(source_ch.reset)  # LIFO: runs before abort()
+        stack.callback(load_ch.reset)
+
+        _wait_for_event(source_ch, cancellation_event, ..., timeout)
+        _wait_for_event(load_ch, cancellation_event, ..., timeout)
+
+        for vin in vin_levels:
+            source_ch.voltage_level = vin
+            _wait_for_event(source_ch, cancellation_event, ..., timeout)
+            for iout in iout_levels:
+                if cancellation_event.is_set():
+                    raise _MeasurementCancelledError()
+                load_ch.current_level = iout
+                _wait_for_event(load_ch, cancellation_event, ..., timeout)
+                # ... measure and calculate ...
+                vin_meas_list.append(...)
+                eff_meas_list.append(...)
+                yield (True, list(vin_meas_list), list(eff_meas_list), ...)
+                # ^ intermediate: output_enabled=True, partial arrays
+
+    # ExitStack has exited here: reset() called, outputs disabled.
+    yield (False, vin_meas_list, eff_meas_list, ...)
+    # ^ final: output_enabled=False, completed arrays
+```
+
+On cancellation inside the `with` block: ExitStack unwinds (`reset()` then `abort()`
+as no-op on the now-Uncommitted sessions), then `_MeasurementCancelledError` propagates
+out of the generator to `measure()`. On normal completion: ExitStack exits cleanly, then
+the final yield delivers the completed results with `output_enabled=False`.
+
+This structure produces exactly `N_vin × N_iout` intermediate yields plus 1 final yield.
 
 `measure()` is the only place that touches `measurement_service.context`:
 
