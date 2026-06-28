@@ -157,6 +157,10 @@ All modes share the following common steps at the start and end.
 
 1. Reserve instrument sessions for `VIN` (`source_pin`) and `VOUT` (`load_pin`) via the NI session management service.
 
+---
+
+### Mode: Power on the DUT
+
 2. Configure the `VIN` session (PPS / SMU):
    - Output function: `DC_VOLTAGE`
    - Voltage level range: `vin_voltage_level_range`
@@ -175,10 +179,6 @@ All modes share the following common steps at the start and end.
    - Aperture time: `aperture_time`
    - Sense: `load_sense`
 
----
-
-### Mode: Power on the DUT
-
 4. Enable outputs on both sessions. Set `output_enabled = True`.
 5. Wait for `SOURCE_COMPLETE` on both sessions.
 6. Release instrument sessions.
@@ -189,6 +189,24 @@ The DUT is now powered at `source_initial_voltage` (VIN) and `load_initial_curre
 ---
 
 ### Mode: Perform Measurement
+
+2. Configure the `VIN` session (PPS / SMU):
+   - Output function: `DC_VOLTAGE`
+   - Voltage level range: `vin_voltage_level_range`
+   - Voltage level: `source_initial_voltage`
+   - Current limit: `vin_current_limit`
+   - Current limit range: `vin_current_limit_range`
+   - Source delay: `source_delay`
+   - Aperture time: `aperture_time`
+   - Sense: `source_sense`
+
+3. Configure the `VOUT` session (Electronic Load / SMU):
+   - Output function: `DC_CURRENT`
+   - Current level: `load_initial_current`
+   - Voltage limit range: `iout_voltage_limit_range`
+   - Source delay: `source_delay`
+   - Aperture time: `aperture_time`
+   - Sense: `load_sense`
 
 4. Enable outputs on both sessions. Set `output_enabled = True`. Wait for `SOURCE_COMPLETE` on each.
 
@@ -220,9 +238,9 @@ The DUT is now powered at `source_initial_voltage` (VIN) and `load_initial_curre
 
 ### Mode: Power off the DUT
 
-4. Reset both sessions to a known safe state (disable outputs). Set `output_enabled = False`.
-5. Release instrument sessions.
-6. **`yield`** empty array outputs (`output_enabled = False`).
+2. Reset both sessions to a known safe state (disable outputs). Set `output_enabled = False`.
+3. Release instrument sessions.
+4. **`yield`** empty array outputs (`output_enabled = False`).
 
 ---
 
