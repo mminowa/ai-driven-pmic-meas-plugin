@@ -99,7 +99,7 @@ interrupted mid-call. The pattern below polls with a short timeout so cancellati
 checked between retries. Note `continue` — it jumps back to the top of the while loop,
 bypassing `raise`, so timeout errors are suppressed and retried rather than propagated.
 
-For **nidcpower**, use this directly (define `_NIDCPOWER_TIMEOUT_ERROR_CODES = {-1074118637, -1074118645}` at module level):
+For **nidcpower**, use this directly (define `_NIDCPOWER_TIMEOUT_ERROR_CODES = {-1074116059, -1074097933}` at module level):
 
 ```python
 def _wait_for_event(
