@@ -8,9 +8,10 @@ Specification-Driven Development process in @CLAUDE.md. Short name: **$1**.
 
 Phase 3 is split into four commands run in order:
 `/scaffold` → `/implement` → `/gen-measui` → `/refine-measui`. This command covers
-@docs/update-measui.md **Steps 1–7**: install the UI Creator, run the measurement service, run
-the UI Creator to generate the `.measui`, and copy it into the plug-in directory. Stop there —
-adding/removing and laying out controls (update-measui.md Steps 8–9) is `/refine-measui`.
+@docs/update-measui.md **Steps 1–8**: install the UI Creator, run the measurement service, run
+the UI Creator to generate the `.measui`, copy it into the plug-in directory, and add/remove
+controls in Measurement Plug-In UI Editor. Stop there — laying out controls
+(update-measui.md Step 9) is `/refine-measui`.
 
 ## Hard rule
 
@@ -26,13 +27,13 @@ interactive step that you could not execute here.
 
 ## Reference
 
-- Full procedure: @docs/update-measui.md, **Steps 1–7**.
-- Plug-in directory, service name, and generated filename: the **Project-Specific
-  Configuration** table in @docs/update-measui.md.
+- Full procedure: @docs/update-measui.md, **Steps 1–8**.
+- Plug-in directory, service name, and generated filename: the **Plugin-Specific Values**
+  table in @docs/update-measui.md.
 
 ## Steps
 
-Follow @docs/update-measui.md, **Steps 1–7**:
+Follow @docs/update-measui.md, **Steps 1–8**:
 
 1. Create a dedicated `venv` at the project root for the UI Creator.
 2. Download the UI Creator wheel and `install.bat` to the project root.
@@ -43,13 +44,17 @@ Follow @docs/update-measui.md, **Steps 1–7**:
 6. Run `ni-measurement-plugin-ui-creator create` and select the measurement service when
    prompted to generate `<ServiceName>.measui`.
 7. Move the generated `.measui` into `src/$1/`, overwriting the existing one.
+8. In Measurement Plug-In UI Editor, add unsupported controls (`Enum`,
+   `DoubleXYDataArray1D`, etc.) and remove any controls that should not appear in the UI.
+   Hand this step to the user — it requires Windows + the UI Editor and cannot be done here.
 
 Do not edit the control layout or XML here — leave that for `/refine-measui`.
 
 ## Finish
 
-Confirm the `.measui` was generated and copied into `src/$1/`, and remind the user not to
-commit `venv/`, `install.bat`, or the `.whl`. Tell the user the next step is
-`/refine-measui $1` to add unsupported controls and match the UI specification.
+Confirm the `.measui` was generated and copied into `src/$1/`. Instruct the user to complete
+Step 8 in Measurement Plug-In UI Editor (add unsupported controls, remove unneeded ones), then
+run `/refine-measui $1` to adjust the layout to match the UI specification. Remind the user not
+to commit `venv/`, `install_ui_creator.bat`, or the `.whl`.
 
 Keep all files, comments, and commit messages in **English**.
