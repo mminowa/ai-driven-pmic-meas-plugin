@@ -1,12 +1,12 @@
 ---
 name: measurement-plugin-sdk
-description: SDK-specific patterns for measurement.py that are hard to find in the reference examples. Covers DataType selection, streaming with yield (when the spec requires real-time output), simulation via the framework, and keeping mode handlers free of gRPC dependencies for Layer 2 testability. Use alongside the Driver-specific reference examples in CLAUDE.md.
+description: SDK-specific patterns for measurement.py that are hard to find in the reference examples. Covers DataType selection, streaming with yield (when the spec requires real-time output), simulation via the framework, and keeping mode handlers free of gRPC dependencies for Layer 2 testability. Use alongside the driver-specific skill and the reference examples listed in the plugin's spec.
 ---
 
 # measurement-plugin-sdk
 
 SDK patterns that are easy to get wrong or hard to find in the reference examples.
-Read the Driver-specific reference examples in @CLAUDE.md for all other boilerplate.
+Read the reference examples listed in the plugin's spec for all other boilerplate.
 
 ## DataType reference
 
@@ -54,17 +54,18 @@ The full streaming pattern (ExitStack, intermediate yields, final yield) is docu
 **Making mode handlers testable** below. Do **not** read `game_of_life/measurement.py` to
 learn this pattern — everything you need is in this skill.
 
-## Simulation via the framework — not via `nidcpower.Session(options=…)`
+## Simulation via the framework — not via driver session options
 
-The standalone driver examples pass `options={'simulate': True, ...}` directly to
-`nidcpower.Session`. Do **not** do this in `measurement.py`. The framework injects simulation
-settings from the `.env` file automatically when `initialize_nidcpower_sessions()` is called.
+The standalone driver examples pass simulation options (e.g. `options={'simulate': True, ...}`
+for nidcpower, or equivalent for other drivers) directly to the session constructor. Do
+**not** do this in `measurement.py`. The framework injects simulation settings from the
+`.env` file automatically when the driver's `initialize_*_sessions()` helper is called.
 `measurement.py` requires no change to run in simulation vs. real hardware.
 
 **Layer 2 integration tests are exempt from this rule.** Integration tests call helper
 functions directly with sessions they create themselves, bypassing the framework. Passing
-`options={'simulate': True, ...}` directly to the driver session constructor is correct
-and expected in test code.
+simulation options directly to the driver session constructor is correct and expected in
+test code.
 
 ## Making mode handlers testable (Layer 2)
 
@@ -74,7 +75,7 @@ tests without a running gRPC service. The design rule is:
 > **Mode handlers must contain zero references to `measurement_service.context`.**
 > All gRPC-specific logic belongs exclusively in `measure()`.
 
-### `_wait_for_event` — cancellation-aware polling
+### Cancellation-aware polling
 
 The key line in `measure()` that makes mode handlers gRPC-free:
 
@@ -93,12 +94,12 @@ class _MeasurementCancelledError(Exception):
     """Raised when the cancellation event is set."""
 ```
 
-nidcpower's `wait_for_event()` blocks and cannot be interrupted mid-call. Polling with
-a 100 ms timeout bounds the cancellation response latency to at most 100 ms. Note
-`continue` — it jumps back to the top of the while loop, bypassing `raise`. The
-reference example uses `pass` instead, which does not change control flow, so `raise`
-always executes and timeout `DriverError`s propagate instead of being suppressed and
-retried:
+Some drivers (e.g. nidcpower) expose blocking `wait_for_event()` calls that cannot be
+interrupted mid-call. The pattern below polls with a short timeout so cancellation is
+checked between retries. Note `continue` — it jumps back to the top of the while loop,
+bypassing `raise`, so timeout errors are suppressed and retried rather than propagated.
+
+For **nidcpower**, use this directly (define `_NIDCPOWER_TIMEOUT_ERROR_CODES = {-1074118637, -1074118645}` at module level):
 
 ```python
 def _wait_for_event(
@@ -122,18 +123,25 @@ def _wait_for_event(
             raise
 ```
 
+For other drivers, replace `nidcpower.errors.DriverError` and the timeout error code set
+with the driver-specific equivalents. For drivers without a blocking `wait_for_event()`
+(e.g. nidmm, niscope), check `cancellation_event.is_set()` in the measurement loop
+directly instead of using this polling helper.
+
 ### Mode handlers — ExitStack callbacks for cleanup
 
 For modes that must turn outputs **off** on exit (e.g. `_run_measurement`), register
-`channels.reset()` as ExitStack callbacks so cleanup runs on any exit path
-(normal, cancelled, or error). Do not register reset callbacks in Power On mode
-handlers — outputs must stay active after the handler returns. Exceptions propagate
-out of the handler to `measure()`:
+cleanup calls as ExitStack callbacks so they run on any exit path (normal, cancelled,
+or error). Do not register reset callbacks in Power On mode handlers — outputs must stay
+active after the handler returns. Exceptions propagate out of the handler to `measure()`.
+
+The examples below use nidcpower APIs (`initiate()`, `reset()`, `voltage_level`, etc.).
+For other drivers, replace these with the equivalent driver calls.
 
 ```python
 def _run_measurement(..., cancellation_event: threading.Event):
     with ExitStack() as stack:
-        stack.enter_context(source_ch.initiate())
+        stack.enter_context(source_ch.initiate())  # nidcpower: initiate as context manager
         stack.enter_context(load_ch.initiate())
         stack.callback(source_ch.reset)   # registered after initiate(), so runs before abort() (LIFO)
         stack.callback(load_ch.reset)
@@ -159,12 +167,11 @@ For generator handlers (streaming with `yield`), the same ExitStack pattern appl
 with one critical placement rule:
 
 > **Intermediate yields go inside the `with ExitStack()` block (outputs active).
-> The final yield goes outside it, after `reset()` has already run.**
+> The final yield goes outside it, after cleanup has already run.**
 
 ```python
 def _run_measurement(..., cancellation_event: threading.Event):
-    # Accumulate results across the sweep
-    vin_meas_list, eff_meas_list = [], []
+    results = []
 
     with ExitStack() as stack:
         stack.enter_context(source_ch.initiate())
@@ -175,31 +182,20 @@ def _run_measurement(..., cancellation_event: threading.Event):
         _wait_for_event(source_ch, cancellation_event, ..., timeout)
         _wait_for_event(load_ch, cancellation_event, ..., timeout)
 
-        for vin in vin_levels:
-            source_ch.voltage_level = vin
-            _wait_for_event(source_ch, cancellation_event, ..., timeout)
-            for iout in iout_levels:
-                if cancellation_event.is_set():
-                    raise _MeasurementCancelledError()
-                load_ch.current_level = iout
-                _wait_for_event(load_ch, cancellation_event, ..., timeout)
-                # ... measure and calculate ...
-                vin_meas_list.append(...)
-                eff_meas_list.append(...)
-                yield (True, list(vin_meas_list), list(eff_meas_list), ...)
-                # ^ intermediate: output_enabled=True, partial arrays
+        for ...:
+            # ... measure and calculate ...
+            results.append(...)
+            yield (True, list(results), ...)
+            # ^ intermediate: output_enabled=True, partial arrays
 
-    # ExitStack has exited here: reset() called, outputs disabled.
-    yield (False, vin_meas_list, eff_meas_list, ...)
+    # ExitStack has exited here: cleanup done, outputs disabled.
+    yield (False, results, ...)
     # ^ final: output_enabled=False, completed arrays
 ```
 
-On cancellation inside the `with` block: ExitStack unwinds (`reset()` then `abort()`
-as no-op on the now-Uncommitted sessions), then `_MeasurementCancelledError` propagates
-out of the generator to `measure()`. On normal completion: ExitStack exits cleanly, then
-the final yield delivers the completed results with `output_enabled=False`.
-
-This structure produces exactly `N_vin × N_iout` intermediate yields plus 1 final yield.
+On cancellation inside the `with` block: ExitStack unwinds all callbacks, then
+`_MeasurementCancelledError` propagates out of the generator to `measure()`. On normal
+completion: ExitStack exits cleanly, then the final yield delivers the completed results.
 
 `measure()` is the only place that touches `measurement_service.context`:
 
