@@ -70,7 +70,7 @@ Create a `.env` file in `src/pmic_efficiency/` with the following content:
 ```
 MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1
 MEASUREMENT_PLUGIN_NIDCPOWER_BOARD_TYPE=PXIe
-MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4151
+MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4139
 ```
 
 Then start the service normally with `start.bat`.
