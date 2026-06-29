@@ -18,8 +18,8 @@ MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4151
 
 **Reference examples:**
 
-- Measurement Plug-In example: `src/examples/meas-plugin/nidcpower_source_dc_voltage/`
-- Standalone driver examples: `src/examples/nidcpower/`
+- Measurement Plug-In example: `src/examples/meas-plugin/nidcpower_source_dc_voltage/measurement.py`
+- Source delay + measure pattern: `src/examples/nidcpower/nidcpower_source_delay_measure.py`
 - Electronic load example: `src/examples/nidcpower/nidcpower_sink_dc_current_into_electronic_load.py`
 
 ---

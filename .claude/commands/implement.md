@@ -23,16 +23,21 @@ stop.
 
 ## Reference
 
-Read these files **before writing any code**:
-- The files listed under **Driver-specific reference examples** in @CLAUDE.md. Read each listed
-  sample file. They illustrate the typical structure (imports, `service_directory`,
-  `measurement_service`, decorator stack, `main()`) and driver-specific API patterns. Use them
-  as a reference — adapt what is relevant to the spec; do not copy blindly.
+In a **single parallel batch**, before writing any code, do all of the following at once:
 
-Then apply:
-- SDK-specific patterns not shown in the examples (DataType selection, generator/yield
-  streaming, simulation via the framework): the **measurement-plugin-sdk** skill.
-- Test layers and what each verifies: @docs/test-design.md.
+- Load the **measurement-plugin-sdk** skill and the driver-specific skill (the skill is
+  named after the driver in the spec's **Plugin Configuration** table —
+  e.g. `nidcpower` → **nidcpower-patterns**).
+- Read `docs/specs/$1.md`, `docs/specs/$1_test_cases.md`, and `@docs/test-design.md`.
+- Read the scaffolded `src/$1/measurement.py` and `src/$1/pyproject.toml`.
+- Read every sample file listed under **Reference examples** in `docs/specs/$1.md`.
+  They illustrate imports, `service_directory`, `measurement_service`, decorator stack, and
+  `main()`. Adapt what is relevant; do not copy blindly.
+- Read one pinmap file from `src/examples/meas-plugin/` as a format reference.
+
+Do not read any additional files after this batch unless a specific question arises during
+implementation. In particular, do **not** read `game_of_life/measurement.py` — the
+streaming `yield` pattern is fully documented in the **measurement-plugin-sdk** skill.
 
 ## Steps
 

@@ -10,20 +10,27 @@ Read the Driver-specific reference examples in @CLAUDE.md for all other boilerpl
 
 ## DataType reference
 
-For the full `DataType` enum and decorator signatures, locate the SDK source files with:
+Run the command below to obtain the full `DataType` enum **and** decorator signatures
+in a single step. Both files are printed together so neither can be skipped:
 
 ```bash
 python -c "
+import inspect
 import ni_measurement_plugin_sdk_service.measurement.info as i
 import ni_measurement_plugin_sdk_service.measurement.service as s
-print(i.__file__)
-print(s.__file__)
+print('=== info.py (' + i.__file__ + ') ===')
+print(inspect.getsource(i))
+print()
+print('=== service.py (' + s.__file__ + ') ===')
+print(inspect.getsource(s))
 "
 ```
 
-Then read the two files:
-- `info.py` — all `DataType` enum values
-- `service.py` — `configuration()` and `output()` decorator signatures
+- The `info.py` block contains all `DataType` enum values.
+- The `service.py` block contains the `configuration()` / `output()` decorator
+  signatures **and the import paths for every complex Python type**
+  (`DoubleXYData`, `Double2DArray`, etc.) — look for lines like
+  `from ni.protobuf.types import ... xydata_pb2` to find the correct import.
 
 Non-obvious rules not visible from the enum alone:
 
@@ -43,8 +50,9 @@ When streaming is required:
   completed arrays at the end).
 - If a mode handler is also a generator, delegate with `yield from _run_handler(...)`.
 
-The only reference example showing this pattern is
-`src/examples/meas-plugin/game_of_life/measurement.py`.
+The full streaming pattern (ExitStack, intermediate yields, final yield) is documented in
+**Making mode handlers testable** below. Do **not** read `game_of_life/measurement.py` to
+learn this pattern — everything you need is in this skill.
 
 ## Simulation via the framework — not via `nidcpower.Session(options=…)`
 
