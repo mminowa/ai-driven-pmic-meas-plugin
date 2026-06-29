@@ -1,5 +1,29 @@
 # PMIC Efficiency Test Specification
 
+## Plugin Configuration
+
+| Item | Value |
+|---|---|
+| Directory | `src/pmic_efficiency/` |
+| Measurement service name | `PMICEfficiency` |
+| Instrument driver | `nidcpower` |
+
+**Simulation environment variables** (create a `.env` file in the plug-in directory):
+
+```
+MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1
+MEASUREMENT_PLUGIN_NIDCPOWER_BOARD_TYPE=PXIe
+MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4139
+```
+
+**Reference examples:**
+
+- Measurement Plug-In example: `src/examples/meas-plugin/nidcpower_source_dc_voltage/measurement.py`
+- Source delay + measure pattern: `src/examples/nidcpower/nidcpower_source_delay_measure.py`
+- Electronic load example: `src/examples/nidcpower/nidcpower_sink_dc_current_into_electronic_load.py`
+
+---
+
 ## Purpose
 
 Characterize the power conversion efficiency of a PMIC (Power Management IC) by sweeping both the input voltage (Vin) and the output load current (Iout). For each combination of Vin and Iout, the plug-in measures input and output voltage and current, calculates input power, output power, and conversion efficiency.
@@ -133,6 +157,10 @@ All modes share the following common steps at the start and end.
 
 1. Reserve instrument sessions for `VIN` (`source_pin`) and `VOUT` (`load_pin`) via the NI session management service.
 
+---
+
+### Mode: Power on the DUT
+
 2. Configure the `VIN` session (PPS / SMU):
    - Output function: `DC_VOLTAGE`
    - Voltage level range: `vin_voltage_level_range`
@@ -151,10 +179,6 @@ All modes share the following common steps at the start and end.
    - Aperture time: `aperture_time`
    - Sense: `load_sense`
 
----
-
-### Mode: Power on the DUT
-
 4. Enable outputs on both sessions. Set `output_enabled = True`.
 5. Wait for `SOURCE_COMPLETE` on both sessions.
 6. Release instrument sessions.
@@ -165,6 +189,24 @@ The DUT is now powered at `source_initial_voltage` (VIN) and `load_initial_curre
 ---
 
 ### Mode: Perform Measurement
+
+2. Configure the `VIN` session (PPS / SMU):
+   - Output function: `DC_VOLTAGE`
+   - Voltage level range: `vin_voltage_level_range`
+   - Voltage level: `source_initial_voltage`
+   - Current limit: `vin_current_limit`
+   - Current limit range: `vin_current_limit_range`
+   - Source delay: `source_delay`
+   - Aperture time: `aperture_time`
+   - Sense: `source_sense`
+
+3. Configure the `VOUT` session (Electronic Load / SMU):
+   - Output function: `DC_CURRENT`
+   - Current level: `load_initial_current`
+   - Voltage limit range: `iout_voltage_limit_range`
+   - Source delay: `source_delay`
+   - Aperture time: `aperture_time`
+   - Sense: `load_sense`
 
 4. Enable outputs on both sessions. Set `output_enabled = True`. Wait for `SOURCE_COMPLETE` on each.
 
@@ -196,9 +238,9 @@ The DUT is now powered at `source_initial_voltage` (VIN) and `load_initial_curre
 
 ### Mode: Power off the DUT
 
-4. Reset both sessions to a known safe state (disable outputs). Set `output_enabled = False`.
-5. Release instrument sessions.
-6. **`yield`** empty array outputs (`output_enabled = False`).
+2. Reset both sessions to a known safe state (disable outputs). Set `output_enabled = False`.
+3. Release instrument sessions.
+4. **`yield`** empty array outputs (`output_enabled = False`).
 
 ---
 
@@ -215,4 +257,4 @@ See [pmic_efficiency_ui.md](pmic_efficiency_ui.md) for the full UI layout, graph
 - `source_initial_voltage` must be a voltage the instrument can physically output (e.g., PXIe-4151 cannot output 0 V).
 - `Pin` must be greater than zero for a valid efficiency result; if `Pin ≤ 0`, `efficiency` at that point is `NaN`.
 - The plug-in does not manage PMIC power sequencing beyond the three modes described above; it assumes the DUT reaches steady state within `source_delay`.
-- Simulation is supported via `MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1` (see [CLAUDE.md](../../CLAUDE.md)).
+- Simulation is supported via `MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1` (see **Plugin Configuration** above).

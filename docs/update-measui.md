@@ -9,24 +9,24 @@ Run this procedure whenever `measurement.py` configuration parameters or outputs
 
 ---
 
-## Project-Specific Configuration
+## Plugin-Specific Values
 
-> When reusing this guide for a new Measurement Plug-In project, update only this section.
-> Everything below applies to any plug-in built with the NI Measurement Plug-Ins framework.
+Look up the following values in the plugin's spec files before starting. Replace
+`<plugin_name>` with the plugin directory name (e.g. `pmic_efficiency`).
 
-| Item | Value |
+| Item | Where to find it |
 |---|---|
-| Plug-in directory | `src\pmic_efficiency` |
-| Measurement service name | `PMICEfficiency` |
-| Generated `.measui` filename | `PMICEfficiency.measui` |
-| UI specification file | [`docs/specs/pmic_efficiency_ui.md`](specs/pmic_efficiency_ui.md) |
+| Plug-in directory | `docs/specs/<plugin_name>.md` → Plugin Configuration section |
+| Measurement service name | `docs/specs/<plugin_name>.md` → Plugin Configuration section |
+| Generated `.measui` filename | `<MeasurementServiceName>.measui` (service name + `.measui`) |
+| UI specification | `docs/specs/<plugin_name>_ui.md` |
 
 ---
 
 ## Prerequisites
 
 - Python 3.10+ installed and available on PATH
-- The plug-in dependencies already installed (`.venv` exists inside the plug-in directory listed in **Project-Specific Configuration**)
+- The plug-in dependencies already installed (`.venv` exists inside the plug-in directory listed in **Plugin-Specific Values** above)
 
 ---
 
@@ -107,7 +107,7 @@ All installations are complete.
 
 ## Step 5 — Start the measurement service (separate terminal)
 
-Open a **new terminal**, navigate to the plug-in directory listed in **Project-Specific Configuration**, and start the gRPC service.
+Open a **new terminal**, navigate to the plug-in directory listed in **Plugin-Specific Values** above, and start the gRPC service.
 
 ```bat
 cd <plugin_directory>
@@ -127,7 +127,7 @@ venv\Scripts\ni-measurement-plugin-ui-creator create
 ```
 
 The tool queries the running discovery service and lists available measurements.
-Select the measurement service name listed in **Project-Specific Configuration** when prompted.
+Select the measurement service name listed in **Plugin-Specific Values** above when prompted.
 
 ```
 ? Select a measurement service: (Use arrow keys)
@@ -140,7 +140,7 @@ The tool generates `<MeasurementServiceName>.measui` in the current directory.
 
 ## Step 7 — Copy the generated file into the plug-in directory
 
-Move the generated `.measui` file (see **Project-Specific Configuration** for the filename)
+Move the generated `.measui` file (see **Plugin-Specific Values** above for the filename)
 into the plug-in directory, overwriting the existing one.
 
 ```powershell
@@ -164,18 +164,8 @@ outputs that do not need to be displayed.
 ## Step 9 — Adjust the layout to match the UI specification
 
 Rearrange and resize controls to match the layout defined in the UI specification file
-listed in **Project-Specific Configuration**.
+listed in **Plugin-Specific Values**.
 
-If you edit the `.measui` XML directly:
-
-- The **authoritative source** for the control to use and its concrete XML is the verified
-  samples — run the `find-meas-example` skill
-  (`.claude/skills/find-meas-example/find_example.sh <term>`) and copy from the real file.
-- For the **grammar** (typed-attribute syntax like `[float]24` / `[SMSolidColorBrush]#ffrrggbb`,
-  namespaces, channel binding, ID format), see [`docs/measui-reference.md`](measui-reference.md).
-- For **constructs that break the parser** (which samples cannot teach), see
-  [`docs/measui-gotchas.md`](measui-gotchas.md), then lint the result with
-  `python scripts/validate_measui.py <file.measui>`.
 
 ---
 

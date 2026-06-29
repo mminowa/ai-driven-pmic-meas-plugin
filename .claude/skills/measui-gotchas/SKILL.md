@@ -1,4 +1,9 @@
-# .measui Gotchas — Empirically Observed Parser Failures
+---
+name: measui-gotchas
+description: Empirically observed .measui parser failures — constructs that break the NI Measurement Plug-In UI Editor. Use when editing .measui XML to avoid parser errors.
+---
+
+# measui-gotchas
 
 > **Status: observed failures, not guesses.**
 > Every item below was reproduced: the construct caused the NI Measurement Plug-In UI
@@ -7,13 +12,10 @@
 >
 > Important: these **cannot be learned from the sample files** under
 > `src/examples/meas-plugin/`. A working sample simply never contains a forbidden
-> construct, so its absence proves nothing. That is why this knowledge lives here as a
-> first-class reference, separate from the positive patterns you copy from samples (use the
-> `find-meas-example` skill for those).
+> construct, so its absence proves nothing.
 
-For the **positive** side — which control/XML to use for a given data type — do not read
-this file; run `.claude/skills/find-meas-example/find_example.sh <term>` and copy from the
-real sample.
+For the **positive** side — which control/XML to use for a given data type — use the
+**find-meas-example** skill and copy from the real sample.
 
 ---
 
@@ -41,7 +43,7 @@ real sample.
 
 ## Mechanical check
 
-`scripts/validate_measui.py <file.measui>` flags the mechanically detectable subset of the
+`.claude/skills/measui-gotchas/validate_measui.py <file.measui>` flags the mechanically detectable subset of the
 above (comments, non-ASCII, duplicate attributes, bad `Id` format, `FitData`,
 `[Type]Boolean`). It is a Linux-runnable lint, **not** a substitute for opening the file in
 the Windows UI Editor — only the editor confirms the file truly loads.

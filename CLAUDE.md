@@ -2,41 +2,20 @@
 
 This file provides guidance for Claude Code when working on this project.
 
-## Project-Specific Configuration
+## Plugins in This Repository
 
-> When reusing this file for a new Measurement Plug-In project, update only this section.
-> Everything below applies to any NI Measurement Plug-In built with this framework.
-
-**What this plug-in measures:** PMIC (Power Management IC) power conversion efficiency — sweeps input voltage (Vin) and output load current (Iout) and calculates conversion efficiency at each operating point.
-
-**Plug-in directory:** `src/pmic_efficiency/`
-
-**Hardware targets:**
-
-| Role | Instrument | Driver |
+| Plugin | Directory | Specification |
 |---|---|---|
-| Input power source | NI PXIe-4151 (PPS) or any nidcpower-compatible SMU | `nidcpower` |
-| Output load | NI PXIe-4051 (Electronic Load) or any nidcpower-compatible SMU | `nidcpower` |
+| PMIC Efficiency | `src/pmic_efficiency/` | [docs/specs/pmic_efficiency.md](docs/specs/pmic_efficiency.md) |
 
-**Simulation environment variables** (create a `.env` file in the plug-in directory):
-
-```
-MEASUREMENT_PLUGIN_NIDCPOWER_SIMULATE=1
-MEASUREMENT_PLUGIN_NIDCPOWER_BOARD_TYPE=PXIe
-MEASUREMENT_PLUGIN_NIDCPOWER_MODEL=4151
-```
-
-**Driver-specific reference examples in this repo:**
-
-- Measurement Plug-In example: `src/examples/meas-plugin/nidcpower_source_dc_voltage/`
-- Standalone driver examples: `src/examples/nidcpower/`
-- Electronic load example: `src/examples/nidcpower/nidcpower_sink_dc_current_into_electronic_load.py`
+Each plugin's spec contains its purpose, hardware targets, simulation environment variables,
+plug-in directory, and reference examples. See the spec for the plugin you are working on.
 
 ---
 
 ## Project Overview
 
-This repository contains an NI Measurement Plug-In implemented with the NI Measurement Plug-Ins framework and Python. See **Project-Specific Configuration** above for what this particular plug-in measures and which instruments it targets.
+This repository contains NI Measurement Plug-Ins implemented with the NI Measurement Plug-Ins framework and Python. See **Plugins in This Repository** above for the list of plug-ins and their specs.
 
 ## Development Approach
 
@@ -50,7 +29,7 @@ This project follows **Specification-Driven Development**. All work proceeds in 
 
 Write a formal spec in `docs/specs/` covering inputs, outputs, instrument configuration, test flow, and any constraints. Do not create any source files until the spec is complete and agreed upon.
 
-> Automation: run `/spec <name>` (or `/new-plugin <name>` first to repurpose this template for a new measurement).
+> Automation: run `/spec <name>`.
 
 ### Phase 2 — Test Definition
 
@@ -62,14 +41,16 @@ Define how the specification will be verified: expected value ranges, edge cases
 
 Set up the plug-in project, write `measurement.py` to satisfy the spec, and verify against the tests. See **Plug-In Technical Setup** below for the step-by-step procedure.
 
-> Automation: run `/implement <name> <MeasurementName>`.
+> Automation: Phase 3 is split into four commands run in order —
+> `/scaffold <name> <MeasurementName>` → `/implement <name>` → `/gen-measui <name>` →
+> `/refine-measui <name>`.
 
 > Do not implement anything not covered by a written specification in `docs/specs/`.
 
 ## Constraints
 
 - **Framework**: All measurement logic must be implemented as an NI Measurement Plug-In using `ni_measurement_plugin_sdk`. Do not bypass this framework.
-- **Instrument driver**: Use the driver(s) listed in **Project-Specific Configuration**. Do not use alternative APIs or bypass the driver.
+- **Instrument driver**: Use the driver(s) listed in the plugin's spec. Do not use alternative APIs or bypass the driver.
 - **Language**: Python 3.10+.
 - **Documentation language**: All documentation, comments, and commit messages must be written in **English**.
 
@@ -77,14 +58,14 @@ Set up the plug-in project, write `measurement.py` to satisfy the spec, and veri
 
 - **No confidential information**: This is a public repository. Never commit credentials, internal hostnames, proprietary circuit parameters, or any customer/product-specific data.
 - **No hardcoded resource names**: Instrument resource names (e.g., `PXI1Slot2`) must come from pin maps or configuration, not hardcoded in source.
-- **Simulation support**: All code must be runnable with simulated instruments using the env vars listed in **Project-Specific Configuration**, so CI and offline development work without hardware.
+- **Simulation support**: All code must be runnable with simulated instruments using the env vars listed in the plugin's spec, so CI and offline development work without hardware.
 
 ## Key Directories
 
 ```
 src/
-  <plugin_name>/          # The measurement plug-in (see Project-Specific Configuration)
-  examples/               # NI reference examples (see Project-Specific Configuration for driver-specific paths)
+  <plugin_name>/          # Each measurement plug-in (see Plugins in This Repository)
+  examples/               # NI reference examples (see the plugin's spec for paths)
 docs/
   specs/                  # Formal specifications (written before implementation)
   test-design.md          # Test strategy and test case definitions (Phase 2)
@@ -126,7 +107,7 @@ poetry --version
 ### 1. Create the plug-in directory and pyproject.toml
 
 Create the plug-in directory under `src/` and write `pyproject.toml` manually with
-`ni_measurement_plugin_sdk`, the instrument driver package(s) listed in **Project-Specific Configuration**, and any other required packages as dependencies.
+`ni_measurement_plugin_sdk`, the instrument driver package(s) listed in the plugin's spec, and any other required packages as dependencies.
 Use the reference example in `src/examples/meas-plugin/` as a template.
 
 ### 2. Add Poetry-related files
@@ -188,16 +169,18 @@ Move all generated files up into the plug-in directory and remove the now-empty 
 mv <MeasurementName>/* . && rmdir <MeasurementName>
 ```
 
-### 5. Modify the generated files
+### 5. Implement `measurement.py`
 
 Edit `measurement.py` to implement the measurement logic: configuration parameters,
 output definitions, and the `measure()` function. Update `.serviceconfig` as needed.
 
-To update `.measui`, follow the procedure in
-[`docs/update-measui.md`](docs/update-measui.md). Re-run that procedure whenever
-`measurement.py` configuration parameters or outputs change.
+### 6. Build the UI (`.measui`)
 
-### 6. Run the measurement service
+To create or update `.measui`, follow the procedure in
+[`docs/update-measui.md`](docs/update-measui.md). Re-run that procedure whenever
+the `measurement.py` configuration parameters or outputs change in Step 5.
+
+### 7. Run the measurement service
 
 On Windows, run the generated batch file to start the gRPC service:
 
@@ -205,16 +188,15 @@ On Windows, run the generated batch file to start the gRPC service:
 start.bat
 ```
 
-### 7. Execute the measurement
+### 8. Execute the measurement
 
 Open `<measurement_name>.measui` in **Measurement Plug-In UI Editor**, then press the **Run** button.
 
 ### Simulation (no hardware required)
 
 Create a `.env` file in the plug-in directory using the environment variables listed in
-**Project-Specific Configuration**.
+the plugin's spec.
 
 ## Reference
 
 - NI Measurement Plug-Ins (Python): https://www.ni.com/docs/ja-JP/bundle/measurementplugins/page/python-measurements.html
-- Driver-specific reference examples: see **Project-Specific Configuration**

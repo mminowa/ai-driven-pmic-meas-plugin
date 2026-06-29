@@ -23,19 +23,21 @@ implementation. Phase 2 produces the test-cases document only.
 1. **Read `docs/specs/$1.md`** in full. The test cases must cover its inputs, outputs, modes,
    and edge cases — nothing outside the spec.
 
-2. **Define the framework-separation function decomposition** as required by @docs/test-design.md:
-   pure calculation functions (Layer 1 unit-testable), mode/handler functions (Layer 2 with the
-   simulated driver), and a thin `measure()` that only dispatches. List them in an
-   "Orchestration functions" table with their signatures.
-
-3. **Write `docs/specs/$1_test_cases.md`** mirroring the template, including:
-   - Project-Specific Configuration: plug-in file prefix, Layer 2 simulation options
-     (`simulate=True` + `driver_setup` per the driver in the spec).
+2. **Write `docs/specs/$1_test_cases.md`** mirroring the template, including:
+   - Project-Specific Configuration:
+     - Plug-in file prefix.
+     - Layer 2 simulation options (`simulate=True` + `driver_setup` per the driver in the spec).
+     - Orchestration Functions table: pure calculation functions (Layer 1 unit-testable),
+       mode handler functions (Layer 2 with the simulated driver), and a thin `measure()` that
+       only dispatches — each with its signature and testability (per @docs/test-design.md).
    - **Layer 1** unit cases: concrete input → expected output tables (include boundary/NaN/guard cases).
    - **Layer 2** integration cases: output shapes, state transitions, cancellation, streaming yields.
-   - **Layer 3** smoke cases: import, `.serviceconfig` JSON fields, required-files list.
+   - **Layer 3** smoke cases: required-files list only (3-3). Cases 3-1 and 3-2 are generic and
+     fully defined in @docs/test-design.md — do not repeat them here.
    - **Layer 4** manual end-to-end checklist (per mode).
 
-4. **Confirm with the user** and state that Phase 3 (`/implement $1`) is next.
+3. **Confirm with the user** and state that Phase 3 is next, starting with
+   `/scaffold $1 <MeasurementName>` (then `/implement $1` → `/gen-measui $1` →
+   `/refine-measui $1`).
 
 Keep all documentation in **English**.

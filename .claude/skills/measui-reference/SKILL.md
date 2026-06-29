@@ -1,15 +1,17 @@
-# .measui Grammar Reference
+---
+name: measui-reference
+description: Grammar reference for NI's .measui (SFP XML) format — typed-attribute syntax, namespaces, channel binding, ID format, control heights, and layout patterns. Use when editing .measui XML directly.
+---
 
-This is the lean reference for the *grammar* of NI's `.measui` (SFP XML) format — the
-typed-attribute syntax, namespaces, channel binding, and ID rules that are tedious to
-re-derive from samples each time. It is intentionally small; two larger paths carry the
-rest:
+# measui-reference
 
-- **Which control / XML to use for a data type → copy from a verified sample.** Run the
-  `find-meas-example` skill (`.claude/skills/find-meas-example/find_example.sh <term>`).
-  Do not transcribe per-control XML here; the samples are the source of truth and never drift.
-- **What breaks the parser → [measui-gotchas.md](measui-gotchas.md)** (observed failures),
-  then lint with `python scripts/validate_measui.py <file.measui>`.
+The *grammar* of NI's `.measui` (SFP XML) format — typed-attribute syntax, namespaces,
+channel binding, ID rules, and layout patterns.
+
+- **Which control / XML to use for a data type** → use the **find-meas-example** skill and
+  copy from a verified sample. Do not transcribe per-control XML here; the samples are the
+  source of truth and never drift.
+- **What breaks the parser** → see the **measui-gotchas** skill.
 
 > **Provenance.** Inferred from the 12 official NI samples in
 > `measurement-plugin-python-examples-3.1.0.zip`
@@ -70,6 +72,8 @@ Every data control links to a measurement parameter via its `Channel` attribute:
 - `<DisplayName>` must **exactly** match the string in
   `@measurement_service.configuration("DisplayName", ...)` / `.output("DisplayName", ...)`
   in `measurement.py`, including spaces and capitalization.
+- **Channel names** in `measurement.py` are always the snake_case Python parameter name;
+  the human-readable label shown in the UI comes from `DisplayName`, not the channel name.
 
 ---
 
@@ -109,7 +113,7 @@ NI SFP XML uses typed attribute values with bracket prefixes. This is the core g
 
 | Prefix | Example | Notes |
 |---|---|---|
-| `[Type]` | `[Type]Double` | `ValueType`. Valid: `Double`, `Single`, `Int32`, `UInt32`, `UInt64`, `String` (not `Boolean` — see gotchas) |
+| `[Type]` | `[Type]Double` | `ValueType`. Valid: `Double`, `Single`, `Int32`, `UInt32`, `UInt64`, `String` (not `Boolean` — see measui-gotchas) |
 | `[UIModel]` | `[UIModel]a100...0001` | Cross-reference to another element's `Id` |
 | `[NI_Core_DataValues_TagRefnum]` | `[NI_Core_DataValues_TagRefnum]Pin1` | `SelectedResource` default pin on `ChannelPinSelector` |
 
@@ -117,7 +121,7 @@ NI SFP XML uses typed attribute values with bracket prefixes. This is the core g
 
 | Prefix | Example | Notes |
 |---|---|---|
-| `[SMSolidColorBrush]` | `[SMSolidColorBrush]#ffffffff` | `BackgroundColor`, `LineStroke`, `PointFill`, etc. |
+| `[SMSolidColorBrush]` | `[SMSolidColorBrush]#ffffffff` | `BackgroundColor`, `LineStroke`, `PointFill`, etc. Fully opaque prefix: `ff` |
 | `[SMColor]` | `[SMColor]#00ffffff` | `Color` on `GridLines` only |
 
 ### Layout
@@ -137,7 +141,7 @@ NI SFP XML uses typed attribute values with bracket prefixes. This is the core g
 | `[SMOrientation]` | `Horizontal`, `Vertical` | `Orientation` on array viewer, axis, switch |
 | `[ScrollBarVisibility]` | `Auto`, `Hidden`, `Visible` | scroll-bar attributes |
 | `[RenderMode]` | `Hardware` | `RenderMode` on `ArrayGraph` |
-| `[RangeAdjuster]` | `FitExactly` | `Adjuster` on `ArrayGraphAxis` (`FitData` invalid — see gotchas) |
+| `[RangeAdjuster]` | `FitExactly` | `Adjuster` on `ArrayGraphAxis` (`FitData` invalid — see measui-gotchas) |
 | `[FillBaseline]` | `Zero` | `AreaBaseline`, `BarBaseline` on `PlotRenderer` |
 | `[PointShape]` | `Ellipse`, `Cross`, `Diamond`, `Rectangle` | `PointShape` on outer `PlotRenderer` |
 | `[LEDShape]` | `Round` | `Shape` on `ChannelLED` |
@@ -150,7 +154,7 @@ NI SFP XML uses typed attribute values with bracket prefixes. This is the core g
 
 ## 6. Control ↔ DataType index
 
-Quick index of which control to reach for. **For the actual XML, run the `find-meas-example`
+Quick index of which control to reach for. **For the actual XML, use the find-meas-example
 skill** and copy from the verified sample — do not author from memory.
 
 | DataType | Output (read-only) | Input (writable) |
@@ -175,10 +179,62 @@ hand-authoring.
 
 ---
 
-## 7. Checksum
+## 7. Layout patterns
 
-The `Checksum` on `SourceFile` must be present; its algorithm is unknown. Use 128 hex zeros
-as a placeholder — the editor recomputes it on save through the GUI.
+### Standard control heights (px)
+
+| Control type | Height |
+|---|---|
+| Label | 15 |
+| ChannelNumericText | 25 |
+| ChannelEnumSelector | 24 |
+| ChannelPinSelector | 25 |
+| ChannelLED | 35 |
+| ChannelArrayViewer (3 visible rows) | 95 |
+
+### Vertical stacking inside a pane
+
+```
+Label      at Top = Y            (Height 15)
+Control    at Top = Y + 18       (Height per table above)
+Next label at Top = Y + 18 + control_height + 5
+```
+
+### Axis label (visible)
+
+```xml
+Label="[string]My Label" LabelVisibility="[SMVisibility]Visible"
+```
+
+### Fixed Y-axis range (no auto-scaling)
+
+```xml
+Adjuster="[RangeAdjuster]None" Range="[IRange]0, 105, System.Double"
+```
+
+### Auto-fit axis (scales to data)
+
+```xml
+Adjuster="[RangeAdjuster]FitExactly"
+```
+
+### Plot color and line thickness
+
+```xml
+LineStroke="[SMSolidColorBrush]#ffff3030"
+PointFill="[SMSolidColorBrush]#ffff3030"
+LineThickness="[double]2"
+```
+
+---
+
+## 8. Checksum
+
+The `Checksum` on `SourceFile` must be present; its algorithm is unknown. The Measurement
+Plug-In UI Editor regenerates it on first save — do not try to compute it manually.
+
+- **Editing an existing file**: leave the old value in place.
+- **Authoring from scratch**: use 128 hex zeros as a placeholder.
 
 ```
 Checksum="00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"

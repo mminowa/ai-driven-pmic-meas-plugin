@@ -1,21 +1,21 @@
 ---
 name: find-meas-example
-description: Find verified NI Measurement Plug-In examples that use a given DataType or .measui UI control. Use this BEFORE writing or editing a .measui file, or before adding a new DataType (configuration/output) to measurement.py — look up the real, working sample and copy from it instead of guessing. Triggers on tasks involving .measui authoring, Measurement Plug-In UI controls (ChannelEnumSelector, ChannelLED, ChannelArrayViewer, ArrayGraph, HmiGraphPlot, etc.), and DataType choices (Enum, DoubleXYData, DoubleArray1D, IOResource, Path, etc.).
+description: Find verified NI Measurement Plug-In examples that use a given .measui UI control or DataType. Use this BEFORE writing or editing a .measui file — look up the real, working sample and copy from it instead of guessing. Triggers on tasks involving .measui authoring and Measurement Plug-In UI controls (ChannelEnumSelector, ChannelLED, ChannelArrayViewer, ArrayGraph, HmiGraphPlot, etc.).
 ---
 
 # find-meas-example
 
 The 12 plug-ins under `src/examples/meas-plugin/` are **verified, working NI samples**.
-They are the source of truth for *how to write* a `measurement.py` parameter or a
-`.measui` control. Do not author `.measui` XML or pick a `DataType` pattern from memory —
-find the real example and copy from it.
+They are the source of truth for *how to write* a `.measui` control. For per-control XML
+blocks (full element structures like `ArrayGraph` or `ChannelEnumSelector`), copy from a
+verified sample rather than authoring from memory.
 
 ## When to use
 
-- Before adding a `@measurement_service.configuration` / `@measurement_service.output`
-  with a `DataType` you have not used yet in this project.
 - Before adding or editing any control in a `.measui` file.
 - When you need the correct UI control for a given data type (the type ↔ control pairing).
+
+For `DataType` selection in `measurement.py`, use the **measurement-plugin-sdk** skill instead.
 
 ## How to use
 
@@ -57,5 +57,5 @@ The `.measui` format is XML; translate intent into the actual tag/type before se
 
 Samples show what *works*. They cannot tell you what *breaks the parser* (a sample simply
 never contains a forbidden construct). For those empirical, failure-derived constraints,
-see `docs/measui-gotchas.md`, and validate a finished `.measui` with
-`scripts/validate_measui.py`. These are complementary to this skill, not a substitute.
+see the **measui-gotchas** skill, and validate a finished `.measui` with
+`.claude/skills/measui-gotchas/validate_measui.py`. These are complementary to this skill, not a substitute.

@@ -1,62 +1,230 @@
 ---
 name: measurement-plugin-sdk
-description: Conventions for writing measurement.py with the NI Measurement Plug-In SDK (ni_measurement_plugin_sdk). Use when creating or editing a measurement.py — the @register_measurement / @configuration / @output decorators, pin reservation and session init, streaming with yield, enum/IOResource parameters, and the framework-separation pattern that keeps logic testable. Pairs with the find-meas-example skill (which finds the right DataType/UI control).
+description: SDK-specific patterns for measurement.py that are hard to find in the reference examples. Covers DataType selection, streaming with yield (when the spec requires real-time output), simulation via the framework, and keeping mode handlers free of gRPC dependencies for Layer 2 testability. Use alongside the driver-specific skill and the reference examples listed in the plugin's spec.
 ---
 
 # measurement-plugin-sdk
 
-How to structure `measurement.py`. This skill carries the *conventions*; the **verified
-examples are the source of truth for exact code** — use the `find-meas-example` skill and
-copy from the real sample. Do not author decorator stacks or session blocks from memory.
+SDK patterns that are easy to get wrong or hard to find in the reference examples.
+Read the reference examples listed in the plugin's spec for all other boilerplate.
 
-## When to use
+## DataType reference
 
-Creating or editing `measurement.py`, or wiring up configuration/output parameters, pins,
-sessions, or streaming.
+Run the command below to obtain the full `DataType` enum **and** decorator signatures
+in a single step. Both files are printed together so neither can be skipped:
 
-## Core conventions (confirmed across the samples under `src/examples/meas-plugin/`)
+```bash
+python -c "
+import inspect
+import ni_measurement_plugin_sdk_service.measurement.info as i
+import ni_measurement_plugin_sdk_service.measurement.service as s
+print('=== info.py (' + i.__file__ + ') ===')
+print(inspect.getsource(i))
+print()
+print('=== service.py (' + s.__file__ + ') ===')
+print(inspect.getsource(s))
+"
+```
 
-1. **Decorator stack** on `measure()` — order matters; copy the shape from a sample:
-   ```python
-   @measurement_service.register_measurement
-   @measurement_service.configuration("pin_names", nims.DataType.IOResource, "Pin1",
-       instrument_type=nims.session_management.INSTRUMENT_TYPE_NI_DCPOWER)
-   @measurement_service.configuration("voltage_level", nims.DataType.Double, 6.0)
-   @measurement_service.output("voltage_measurements", nims.DataType.DoubleArray1D)
-   def measure(pin_names, voltage_level): ...
-   ```
-   - The DisplayName string in each decorator must match the `.measui` `Channel` binding
-     exactly (see `docs/measui-reference.md` §3).
-   - For a DataType you have not used yet, run
-     `.claude/skills/find-meas-example/find_example.sh <DataType>` first.
+- The `info.py` block contains all `DataType` enum values.
+- The `service.py` block contains the `configuration()` / `output()` decorator
+  signatures **and the import paths for every complex Python type**
+  (`DoubleXYData`, `Double2DArray`, etc.) — look for lines like
+  `from ni.protobuf.types import ... xydata_pb2` to find the correct import.
 
-2. **Enum / IOResource parameters:** `DataType.Enum` takes `enum_type=<IntEnum>`;
-   `DataType.IOResource` takes `instrument_type=...`. See examples via the find-meas-example
-   skill.
+Non-obvious rules not visible from the enum alone:
 
-3. **Pins and sessions — never hardcode resource names.** Reserve by pin name and let the
-   session-management service resolve hardware from the pin map:
-   ```python
-   with measurement_service.context.reserve_sessions(pin_names) as reservation:
-       with reservation.initialize_nidcpower_sessions() as session_infos:
-           ...
-   ```
+- `DataType.Pin` / `DataType.PinArray1D` are **deprecated** — use `IOResource` / `IOResourceArray1D` instead.
+- `DoubleXYData`, `Double2DArray`, `String2DArray`, `DoubleXYDataArray1D` are **output only** — passing them to `configuration()` raises `ValueError`.
+- `IOResource` / `IOResourceArray1D` should include `instrument_type=` (a constant from `ni_measurement_plugin_sdk_service.session_management`, e.g. `INSTRUMENT_TYPE_NI_DCPOWER`). Omitting it does not raise an error but disables instrument-type filtering in the pin map.
+- `Enum` / `EnumArray1D` require `enum_type=` — a Python `enum.Enum` subclass (or protobuf enum) where at least one member has value `0`. Omitting `enum_type` raises `ValueError`.
 
-4. **Streaming:** `yield` partial results to update the UI in real time; the function is a
-   generator when it streams. Yield a complete tuple of all outputs each time.
+## Streaming with `yield` (only when the spec requires real-time output)
 
-5. **Framework-separation for testability (required by @docs/test-design.md):** `measure()`
-   is a thin orchestrator. Put logic in:
-   - pure calculation functions (no instrument/framework calls) → Layer 1 unit tests,
-   - mode/handler functions taking session objects → Layer 2 tests with the simulated driver,
-   - `measure()` only reserves sessions and dispatches.
-   Use the exact function names listed in the project's `docs/specs/<name>_test_cases.md`.
+Most measurements use `return`. Use `yield` only when the spec explicitly requires
+real-time streaming of partial results to the UI during the measurement loop.
 
-6. **Simulation must work without hardware** — honor the simulation env vars from @CLAUDE.md
-   (a `.env` in the plug-in directory). All code must run with simulated instruments.
+When streaming is required:
+- `measure()` becomes a generator — use `yield`, never `return`.
+- Yield a complete tuple of **all** outputs each time (partial arrays mid-loop, then
+  completed arrays at the end).
+- If a mode handler is also a generator, delegate with `yield from _run_handler(...)`.
 
-## Reference
+The full streaming pattern (ExitStack, intermediate yields, final yield) is documented in
+**Making mode handlers testable** below. Do **not** read `game_of_life/measurement.py` to
+learn this pattern — everything you need is in this skill.
 
-- Exact code patterns: the `find-meas-example` skill + the samples it points to.
-- Testability decomposition and the four test layers: @docs/test-design.md.
-- Project rules (no hardcoded resources, simulation support, English only): @CLAUDE.md.
+## Simulation via the framework — not via driver session options
+
+The standalone driver examples pass simulation options (e.g. `options={'simulate': True, ...}`
+for nidcpower, or equivalent for other drivers) directly to the session constructor. Do
+**not** do this in `measurement.py`. The framework injects simulation settings from the
+`.env` file automatically when the driver's `initialize_*_sessions()` helper is called.
+`measurement.py` requires no change to run in simulation vs. real hardware.
+
+**Layer 2 integration tests are exempt from this rule.** Integration tests call helper
+functions directly with sessions they create themselves, bypassing the framework. Passing
+simulation options directly to the driver session constructor is correct and expected in
+test code.
+
+## Making mode handlers testable (Layer 2)
+
+Mode handlers (e.g. `_run_power_on`, `_run_measurement`) are called directly in Layer 2
+tests without a running gRPC service. The design rule is:
+
+> **Mode handlers must contain zero references to `measurement_service.context`.**
+> All gRPC-specific logic belongs exclusively in `measure()`.
+
+### Cancellation-aware polling
+
+The key line in `measure()` that makes mode handlers gRPC-free:
+
+```python
+measurement_service.context.add_cancel_callback(cancellation_event.set)
+```
+
+The gRPC framework calls this callback on **both** user cancellation and deadline
+exceeded. A single `threading.Event` therefore captures all stop conditions — mode
+handlers never need to touch `measurement_service.context`.
+
+`_MeasurementCancelledError` carries the stop signal back to `measure()`:
+
+```python
+class _MeasurementCancelledError(Exception):
+    """Raised when the cancellation event is set."""
+```
+
+Some drivers (e.g. nidcpower) expose blocking `wait_for_event()` calls that cannot be
+interrupted mid-call. The pattern below polls with a short timeout so cancellation is
+checked between retries. Note `continue` — it jumps back to the top of the while loop,
+bypassing `raise`, so timeout errors are suppressed and retried rather than propagated.
+
+For **nidcpower**, use this directly (define `_NIDCPOWER_TIMEOUT_ERROR_CODES = {-1074116059, -1074097933}` at module level):
+
+```python
+def _wait_for_event(
+    channels,
+    cancellation_event: threading.Event,
+    event_id: nidcpower.enums.Event,
+    timeout: float,
+) -> None:
+    user_deadline = time.time() + timeout
+    while True:
+        if time.time() > user_deadline:
+            raise TimeoutError("User timeout expired.")
+        if cancellation_event.is_set():
+            raise _MeasurementCancelledError()
+        try:
+            channels.wait_for_event(event_id, timeout=100e-3)
+            return
+        except nidcpower.errors.DriverError as e:
+            if e.code in _NIDCPOWER_TIMEOUT_ERROR_CODES:
+                continue
+            raise
+```
+
+For other drivers, replace `nidcpower.errors.DriverError` and the timeout error code set
+with the driver-specific equivalents. For drivers without a blocking `wait_for_event()`
+(e.g. nidmm, niscope), check `cancellation_event.is_set()` in the measurement loop
+directly instead of using this polling helper.
+
+### Mode handlers — ExitStack callbacks for cleanup
+
+For modes that must turn outputs **off** on exit (e.g. `_run_measurement`), register
+cleanup calls as ExitStack callbacks so they run on any exit path (normal, cancelled,
+or error). Do not register reset callbacks in Power On mode handlers — outputs must stay
+active after the handler returns. Exceptions propagate out of the handler to `measure()`.
+
+The examples below use nidcpower APIs (`initiate()`, `reset()`, `voltage_level`, etc.).
+For other drivers, replace these with the equivalent driver calls.
+
+```python
+def _run_measurement(..., cancellation_event: threading.Event):
+    with ExitStack() as stack:
+        stack.enter_context(source_ch.initiate())  # nidcpower: initiate as context manager
+        stack.enter_context(load_ch.initiate())
+        stack.callback(source_ch.reset)   # registered after initiate(), so runs before abort() (LIFO)
+        stack.callback(load_ch.reset)
+
+        _wait_for_event(source_ch, cancellation_event, ..., timeout)
+        _wait_for_event(load_ch, cancellation_event, ..., timeout)
+
+        results = []
+        for vin in vin_levels:
+            source_ch.voltage_level = vin
+            _wait_for_event(source_ch, cancellation_event, ..., timeout)
+            for iout in iout_levels:
+                if cancellation_event.is_set():
+                    raise _MeasurementCancelledError()
+                load_ch.current_level = iout
+                _wait_for_event(load_ch, cancellation_event, ..., timeout)
+                results.append(...)
+
+    return results
+```
+
+For generator handlers (streaming with `yield`), the same ExitStack pattern applies,
+with one critical placement rule:
+
+> **Intermediate yields go inside the `with ExitStack()` block (outputs active).
+> The final yield goes outside it, after cleanup has already run.**
+
+```python
+def _run_measurement(..., cancellation_event: threading.Event):
+    results = []
+
+    with ExitStack() as stack:
+        stack.enter_context(source_ch.initiate())
+        stack.enter_context(load_ch.initiate())
+        stack.callback(source_ch.reset)  # LIFO: runs before abort()
+        stack.callback(load_ch.reset)
+
+        _wait_for_event(source_ch, cancellation_event, ..., timeout)
+        _wait_for_event(load_ch, cancellation_event, ..., timeout)
+
+        for ...:
+            # ... measure and calculate ...
+            results.append(...)
+            yield (True, list(results), ...)
+            # ^ intermediate: output_enabled=True, partial arrays
+
+    # ExitStack has exited here: cleanup done, outputs disabled.
+    yield (False, results, ...)
+    # ^ final: output_enabled=False, completed arrays
+```
+
+On cancellation inside the `with` block: ExitStack unwinds all callbacks, then
+`_MeasurementCancelledError` propagates out of the generator to `measure()`. On normal
+completion: ExitStack exits cleanly, then the final yield delivers the completed results.
+
+`measure()` is the only place that touches `measurement_service.context`:
+
+```python
+def measure(...):
+    cancellation_event = threading.Event()
+    measurement_service.context.add_cancel_callback(cancellation_event.set)
+    # ^ gRPC framework calls this on both CANCELLED and DEADLINE_EXCEEDED
+    ...
+    try:
+        return _run_measurement(..., cancellation_event=cancellation_event)
+        # generator handler: yield from _run_measurement(..., cancellation_event=cancellation_event)
+    except _MeasurementCancelledError:
+        measurement_service.context.abort(grpc.StatusCode.CANCELLED, "Cancelled.")
+```
+
+In Layer 2 tests, pass a plain `threading.Event` — no gRPC service needed. Test
+cancellation with `pytest.raises`:
+
+```python
+cancel = threading.Event()
+cancel.set()
+with pytest.raises(_MeasurementCancelledError):
+    _run_measurement(..., cancellation_event=cancel)
+    # generator handler: list(_run_measurement(..., cancellation_event=cancel))
+```
+
+### "Power On" mode and `initiate()` — see `nidcpower-patterns`
+
+Whether to call `initiate()` with or without a context manager depends on whether
+the mode must keep outputs active after returning. This is a nidcpower driver concern,
+not an SDK concern — see the `nidcpower-patterns` skill (`initiate()` lifecycle section).

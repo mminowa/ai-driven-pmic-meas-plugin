@@ -1,0 +1,44 @@
+---
+description: Phase 3 step 4 of 4 — adjust the generated .measui layout/XML to match the UI specification, then lint. Edits the .measui directly.
+argument-hint: <short_name>  e.g. buck_ripple
+---
+
+You are running the **refine-measui** step of Phase 3 (Implementation) of the
+Specification-Driven Development process in @CLAUDE.md. Short name: **$1**.
+
+Phase 3 is split into four commands run in order:
+`/scaffold` → `/implement` → `/gen-measui` → `/refine-measui`. This command covers
+docs/update-measui.md **Step 9**: adjust and lay out the controls in `src/$1/<ServiceName>.measui`
+to match the UI specification, editing the XML directly.
+
+## Hard rule
+
+The `.measui` must already exist in `src/$1/` with all required controls added and unneeded ones
+removed (update-measui.md Step 8, done in `/gen-measui`). If it does not exist, tell the user to
+run `/gen-measui` first and stop. If expected controls are missing, note them rather than
+assuming they are present.
+
+## Reference
+
+- The procedure: docs/update-measui.md, **Step 9**.
+- The target layout: the UI specification file `docs/specs/$1_ui.md` (see also the
+  **Plugin-Specific Values** section in docs/update-measui.md).
+- XML grammar, channel binding, ID format, control heights, layout patterns:
+  the **measui-reference** skill.
+- Parser-breaking constructs to avoid: the **measui-gotchas** skill.
+
+## Steps
+
+Follow docs/update-measui.md, **Step 9** (rearrange/resize controls to match the UI spec):
+
+1. Read `src/$1/*.measui` and `docs/specs/$1_ui.md`.
+2. Edit the .measui XML so controls match the layout.
+3. Run `.claude/skills/measui-gotchas/validate_measui.py src/$1/<ServiceName>.measui` and fix any findings.
+
+## Finish
+
+Report the validation result. Note that live `.measui` loading requires Windows + the
+Measurement Plug-In UI Editor, so visual confirmation cannot be done here. This completes
+Phase 3.
+
+Keep all files, comments, and commit messages in **English**.

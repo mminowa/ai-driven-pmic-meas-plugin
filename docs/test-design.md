@@ -4,8 +4,8 @@ This document describes the four-layer testing strategy for NI Measurement Plug-
 following the Specification-Driven Development process. Tests are defined before implementation
 begins. Implementation must satisfy these test definitions.
 
-For this project's test cases, see
-[docs/specs/pmic_efficiency_test_cases.md](specs/pmic_efficiency_test_cases.md).
+Each plugin's test cases are defined in `docs/specs/<plugin_name>_test_cases.md`.
+For example: [docs/specs/pmic_efficiency_test_cases.md](specs/pmic_efficiency_test_cases.md).
 
 ---
 
@@ -35,9 +35,9 @@ The specific function names for this project are listed in the test cases docume
 
 ### Layer 1 — Unit Tests
 
-**Location**: `tests/test_calculations.py`
+**Location**: `tests/<plugin_name>/test_calculations.py`
 **Requirements**: `pytest` only; no hardware, no NI framework, no network.
-**Run command**: `pytest tests/test_calculations.py`
+**Run command**: `poetry run pytest` (from `src/<plugin_name>/`)
 
 Test pure Python functions that contain no instrument or framework calls: calculations,
 data transformations, and any other logic that can be exercised with plain Python arguments.
@@ -48,10 +48,10 @@ See the test cases document for the specific test cases for this project.
 
 ### Layer 2 — Integration Tests (simulated driver)
 
-**Location**: `tests/test_measurement.py`
+**Location**: `tests/<plugin_name>/test_measurement.py`
 **Requirements**: `pytest` and the instrument driver with simulation options.
 No real hardware. No NI session management service.
-**Run command**: `pytest tests/test_measurement.py`
+**Run command**: `poetry run pytest` (from `src/<plugin_name>/`)
 
 Call the mode handler functions directly with simulated driver sessions.
 Verify output shapes, state transitions, and error handling without hardware.
@@ -62,9 +62,9 @@ See the test cases document for simulation options and test cases for this proje
 
 ### Layer 3 — Smoke Tests
 
-**Location**: `tests/test_smoke.py`
+**Location**: `tests/<plugin_name>/test_smoke.py`
 **Requirements**: `pytest`; no hardware, no running service.
-**Run command**: `pytest tests/test_smoke.py`
+**Run command**: `poetry run pytest` (from `src/<plugin_name>/`)
 
 #### 3-1. Import
 
@@ -87,7 +87,8 @@ See the test cases document for the list of required files for this project.
 ### Layer 4 — Manual End-to-End Checklist
 
 These tests require NI InstrumentStudio and the measurement service running via `start.bat`.
-Run with simulated instruments using a `.env` file (see [CLAUDE.md](../CLAUDE.md)).
+Run with simulated instruments using a `.env` file (see `docs/specs/<plugin_name>.md` →
+Plugin Configuration for the required environment variables).
 
 #### Service startup
 
@@ -114,10 +115,15 @@ measurement accuracy:
 
 ```
 tests/
-  test_calculations.py   # Layer 1: pure Python logic
-  test_measurement.py    # Layer 2: simulated driver
-  test_smoke.py          # Layer 3: import and file existence
+  <plugin_name>/
+    conftest.py          # sys.path setup; PLUGIN_DIR reference
+    test_calculations.py # Layer 1: pure Python logic
+    test_measurement.py  # Layer 2: simulated driver
+    test_smoke.py        # Layer 3: import and file existence
 ```
+
+Tests are run via `poetry run pytest` from `src/<plugin_name>/`. The `testpaths` entry in
+`src/<plugin_name>/pyproject.toml` points pytest to `../../tests/<plugin_name>/`.
 
 Layer 4 checklist is maintained in the test cases document and executed manually before
 each release.
