@@ -83,10 +83,12 @@ src/
   examples/
     meas-plugin/          # NI Measurement Plug-In reference examples (multiple drivers)
     nidcpower/            # Standalone nidcpower driver examples
+tests/
+  pmic_efficiency/        # Unit and integration tests (Layers 1–3)
 docs/
-  specs/                  # Formal specifications and PMIC-specific test cases
+  specs/                  # Formal specifications, UI spec, and test cases
   test-design.md          # Four-layer test strategy (generic)
-scripts/                  # Helper scripts (e.g. validate_measui.py)
+  update-measui.md        # Procedure for regenerating the .measui
 .claude/                  # Claude Code automation: commands/, skills/, agents/
 ```
 
